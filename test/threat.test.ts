@@ -11,7 +11,7 @@ describe("threat map", () => {
   it("marks every hex a warband can charge, not just the ones next to it", () => {
     // Move 4 on open plain, so the warband can close and still strike well beyond its hex.
     const s = field({ dacia: [{ kind: "warband", at: { q: 5, r: 4 } }] });
-    const map = threatMap(s, "dacia");
+    const map = threatMap(s, "enemy");
 
     assert.equal(threatLevel(threatAt(map, { q: 4, r: 4 })), 1, "adjacent hex is threatened");
     assert.equal(threatLevel(threatAt(map, { q: 1, r: 4 })), 1, "four moves out, then a charge");
@@ -26,7 +26,7 @@ describe("threat map", () => {
         { kind: "dacian_archers", at: { q: 9, r: 7 } },
       ],
     });
-    const map = threatMap(s, "dacia");
+    const map = threatMap(s, "enemy");
 
     const nextToWarband = threatAt(map, { q: 1, r: 0 });
     assert.equal(nextToWarband?.melee.length, 1);
@@ -45,7 +45,7 @@ describe("threat map", () => {
         { kind: "falxmen", at: { q: 6, r: 3 } },
       ],
     });
-    const cell = threatAt(threatMap(s, "dacia"), { q: 5, r: 3 });
+    const cell = threatAt(threatMap(s, "enemy"), { q: 5, r: 3 });
     assert.equal(cell?.melee.length, 2);
   });
 
@@ -54,14 +54,14 @@ describe("threat map", () => {
       rome: [{ kind: "cohort", at: { q: 0, r: 0 } }],
       dacia: [{ kind: "warband", at: { q: 5, r: 4 } }],
     });
-    const before = threatMap(s, "dacia").size;
+    const before = threatMap(s, "enemy").size;
 
     // The warband has charged and is finished for this turn. It is still the same threat
     // to plan against, because the overlay answers for the turn after this one.
     const warband = at(s, 5, 4);
     warband.moved = true;
     warband.acted = true;
-    assert.equal(threatMap(s, "dacia").size, before, "a spent unit still threatens next turn");
+    assert.equal(threatMap(s, "enemy").size, before, "a spent unit still threatens next turn");
     assert.ok(before > 0);
   });
 
@@ -77,16 +77,16 @@ describe("threat map", () => {
       rome: [{ kind: "cohort", at: { q: 8, r: 4 } }],
       dacia: [{ kind: "warband", at: { q: 4, r: 4 } }],
     });
-    const open = threatMap(s, "dacia").size;
+    const open = threatMap(s, "enemy").size;
 
     // Standing in the mouth of the corridor is the whole point of a shield wall.
     moveUnit(s, at(s, 8, 4), { q: 5, r: 4 });
-    assert.ok(threatMap(s, "dacia").size < open, "blocking the lane cuts the enemy's reach");
+    assert.ok(threatMap(s, "enemy").size < open, "blocking the lane cuts the enemy's reach");
   });
 
   it("goes quiet once the battle is decided", () => {
     const s = field({ dacia: [{ kind: "warband", at: { q: 5, r: 4 } }] });
     s.over = { won: true, reason: "done" };
-    assert.equal(threatMap(s, "dacia").size, 0);
+    assert.equal(threatMap(s, "enemy").size, 0);
   });
 });

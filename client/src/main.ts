@@ -106,7 +106,7 @@ async function submit(state: BattleState): Promise<void> {
 
     const body = el("div", {},
       el("p", { class: "muted", text: state.over?.reason ?? "" }),
-      el("p", { text: `${stats.turns} turns · Roman losses ${stats.romanLosses} · Dacian losses ${stats.dacianLosses}` }),
+      el("p", { text: `${stats.turns} turns · ${state.campaign.player.adjective} losses ${stats.playerLosses} · ${state.campaign.enemy.adjective} losses ${stats.enemyLosses}` }),
       el("div", { class: "points-big", text: out.pointsEarned > 0 ? `+${out.pointsEarned} history points` : stats.won ? "Already earned" : "No points" }),
       ...rows,
       out.rankUp ? el("p", { class: "lesson-box", text: `Promoted: ${out.rankUp}` }) : null,

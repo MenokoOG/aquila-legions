@@ -1,9 +1,12 @@
-import type { BattleStats, CodexEntry, ResultResponse, SaveState, Scenario, ScenarioRecord } from "../../shared/types.js";
+import type {
+  BattleStats, Campaign, CodexEntry, ResultResponse, SaveState, Scenario, ScenarioRecord,
+} from "../../shared/types.js";
 
 /** Thin fetch layer over the local API. */
 
 export interface ScenarioSummary {
   id: string;
+  campaignId: string;
   order: number;
   title: string;
   year: string;
@@ -15,6 +18,7 @@ export interface ScenarioSummary {
 
 export interface StateResponse {
   save: SaveState;
+  campaigns: Campaign[];
   scenarios: ScenarioSummary[];
 }
 

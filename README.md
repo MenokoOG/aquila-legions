@@ -54,7 +54,17 @@ test/            node:test suites over the rules, the forecast, and progression
 data/save.json   your campaign (git-ignored)
 ```
 
-One responsibility per file. The combat numbers live in `client/src/engine/rules.ts`; the roster in `shared/data/units.ts`; the battles in `shared/data/scenarios.ts`; the history in `shared/data/codex.ts`.
+One responsibility per file. The combat formulas live in `client/src/engine/rules.ts`; the formation numbers in `shared/data/formations.ts`; the rosters in `shared/data/units-*.ts`; the battles in `shared/data/scenarios.ts`; the history in `shared/data/codex.ts`.
+
+### Adding a campaign
+
+The engine deals in `player` and `enemy`. It does not contain the word "Dacia", and the combat rules do not know that cataphracts are cataphracts: a unit charges harder because of `chargeBonus` on its template, and a wedge hits harder because of `attackMul` in the formation table. A new era is therefore data, not an edit to the rules:
+
+1. A record in `shared/data/campaigns.ts`, which supplies the names both armies are given on screen.
+2. A roster file, `shared/data/units-<era>.ts`, imported into `shared/data/units.ts`. `UnitKind` is derived from what is there, so the type follows the data.
+3. Scenarios in `shared/data/scenarios.ts` carrying that `campaignId`, and codex entries in `shared/data/codex.ts`.
+
+`test/campaign.test.ts` guards those seams: it fails if a scenario points at a campaign that does not exist, places a unit the roster does not have, or puts a unit on the wrong side. The reasoning behind the split is in `docs/adr/0002-campaign-registry-and-generic-sides.md`.
 
 `rules.ts` keeps the damage formulas pure and separate from the dice, so `engine/forecast.ts` can show a prediction that cannot drift from the blow, and the tests can pin the roll and assert on the rules alone.
 

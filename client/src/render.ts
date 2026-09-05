@@ -27,11 +27,6 @@ const TERRAIN_FILL: Record<Terrain, [string, string]> = {
   rough: ["#9a9a8c", "#6f6f64"],
 };
 
-const GLYPH: Record<string, string> = {
-  cohort: "COH", first_cohort: "I", aux_infantry: "AUX", aux_archers: "SAG", ala_cavalry: "ALA",
-  scorpio: "SCP", warband: "WAR", falxmen: "FLX", dacian_archers: "ARC", cataphracts: "CAT",
-};
-
 const FORM_BADGE: Record<string, string> = { line: "", testudo: "T", cuneus: "W", orbis: "O" };
 
 const FLOAT_COLOR: Record<string, string> = {
@@ -148,7 +143,7 @@ function drawThreat(ctx: CanvasRenderingContext2D, hx: Hex, cx: number, cy: numb
 }
 
 function drawUnit(ctx: CanvasRenderingContext2D, u: BattleUnit, cx: number, cy: number, selected: boolean): void {
-  const rome = u.side === "rome";
+  const own = u.side === "player";
   const w = 30;
   const h = 34;
   ctx.save();
@@ -156,14 +151,14 @@ function drawUnit(ctx: CanvasRenderingContext2D, u: BattleUnit, cx: number, cy: 
     ctx.shadowColor = "#fff3b0";
     ctx.shadowBlur = 18;
   }
-  ctx.fillStyle = rome ? "#9b1c1c" : "#2f4b6e";
-  ctx.strokeStyle = rome ? "#e8c65a" : "#c7d3e0";
+  ctx.fillStyle = own ? "#9b1c1c" : "#2f4b6e";
+  ctx.strokeStyle = own ? "#e8c65a" : "#c7d3e0";
   ctx.lineWidth = 2.2;
   ctx.beginPath();
-  if (rome && (u.kind === "cohort" || u.kind === "first_cohort")) {
+  if (own && u.tmpl.core) {
     const r = 5;
     ctx.roundRect(cx - w / 2, cy - h / 2, w, h, r);
-  } else if (u.kind === "ala_cavalry" || u.kind === "cataphracts") {
+  } else if (u.tmpl.mounted) {
     ctx.moveTo(cx, cy - h / 2);
     ctx.lineTo(cx + w / 2, cy + h / 2 - 4);
     ctx.lineTo(cx - w / 2, cy + h / 2 - 4);
@@ -175,7 +170,7 @@ function drawUnit(ctx: CanvasRenderingContext2D, u: BattleUnit, cx: number, cy: 
   ctx.stroke();
   ctx.shadowBlur = 0;
 
-  if (rome) {
+  if (own) {
     ctx.fillStyle = "#e8c65a";
     ctx.beginPath(); ctx.arc(cx, cy, 3.2, 0, Math.PI * 2); ctx.fill();
   }
@@ -184,7 +179,7 @@ function drawUnit(ctx: CanvasRenderingContext2D, u: BattleUnit, cx: number, cy: 
   ctx.font = "bold 10px 'Cinzel', 'Georgia', serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(GLYPH[u.kind] ?? "?", cx, cy - 7);
+  ctx.fillText(u.tmpl.glyph, cx, cy - 7);
 
   if (u.pila > 0) {
     ctx.strokeStyle = "#fff8e6";

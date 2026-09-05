@@ -1,4 +1,5 @@
 import type { Formation, Hex, Scenario } from "../../../shared/types.js";
+import { FORMATION_ORDER } from "../../../shared/data/formations.js";
 import { boardPixelSize, fromPixel, key } from "../hex.js";
 import {
   type BattleState, type BattleUnit, cloneBattle, createBattle, toStats, unitAt,
@@ -9,7 +10,7 @@ import {
 } from "../engine/rules.js";
 import { type Forecast, forecast } from "../engine/forecast.js";
 import { type ThreatMap, threatAt, threatMap } from "../engine/threat.js";
-import { dacianTurn } from "../engine/ai.js";
+import { enemyTurn } from "../engine/ai.js";
 import { Effects } from "../effects.js";
 import { type Highlights, render, sizeCanvas } from "../render.js";
 import { type ActionMode, type DangerView, renderLeftPanel, renderLog, updateInspector } from "./hud.js";
@@ -25,7 +26,7 @@ export interface BattleScreenHandlers {
   onWithdraw: () => void;
 }
 
-/** How many orders can be taken back. Undo never crosses into the Dacian turn. */
+/** How many orders can be taken back. Undo never crosses into the enemy turn. */
 const UNDO_DEPTH = 40;
 
 /** Tears down listeners so the screen can be swapped out without leaking them. */
@@ -58,11 +59,11 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
   function attach(state: BattleState): BattleState {
     state.listener = {
       damage: (target, men) => {
-        fx.add(target.at, `-${men}`, target.side === "rome" ? "friendly" : "hit");
+        fx.add(target.at, `-${men}`, target.side === "player" ? "friendly" : "hit");
         startAnimation();
       },
       rout: (victim) => {
-        fx.add(victim.at, victim.side === "rome" ? "ROUTED" : "BROKEN", "rout");
+        fx.add(victim.at, victim.side === "player" ? "ROUTED" : "BROKEN", "rout");
         startAnimation();
       },
     };
@@ -75,7 +76,7 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
   }
 
   function ours(u: BattleUnit | null): boolean {
-    return !!u && u.side === "rome" && s.active === "rome" && !busy && !s.over;
+    return !!u && u.side === "player" && s.active === "player" && !busy && !s.over;
   }
 
   /** Remembers the current position so the next order can be taken back. */
@@ -98,7 +99,7 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
     const sel = selected();
     if (!ours(sel) || !hoverHex) return null;
     const target = unitAt(s, hoverHex);
-    if (!target || target.side === "rome") return null;
+    if (!target || target.side === "player") return null;
     if (mode === "pila" && pilaTargets(s, sel!).some((t) => t.id === target.id)) return forecast(s, sel!, target, "pila");
     if (meleeTargets(s, sel!).some((t) => t.id === target.id)) return forecast(s, sel!, target, "melee");
     if (rangedTargets(s, sel!).some((t) => t.id === target.id)) return forecast(s, sel!, target, "shoot");
@@ -167,7 +168,7 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
 
   /** Every order can open or close a lane, so the enemy's reach is re-read after each one. */
   function refreshThreat(): void {
-    threat = threatMap(s, "dacia");
+    threat = threatMap(s, "enemy");
     renderBoardBar(bar, { showThreat, threatened: threat.size }, () => toggleThreat());
   }
 
@@ -183,7 +184,7 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
     renderLeftPanel(left, s, view(), {
       onFormation: (f: Formation) => applyFormation(f),
       onMode: (m) => { mode = m; drawAll(); },
-      onEndTurn: () => { void runDacianTurn(); },
+      onEndTurn: () => { void runEnemyTurn(); },
       onUndo: () => undo(),
       onRestart: () => confirmRestart(),
       onRetreat: () => confirmWithdraw(),
@@ -227,12 +228,12 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
   canvas.addEventListener("mouseleave", () => { hoverHex = null; drawHover(); });
 
   canvas.addEventListener("click", (ev) => {
-    if (busy || s.over || s.active !== "rome") return;
+    if (busy || s.over || s.active !== "player") return;
     const hx = pointToHex(ev);
     if (!hx) return;
     const target = unitAt(s, hx);
 
-    if (target && target.side === "rome") {
+    if (target && target.side === "player") {
       selectedId = target.id;
       mode = "attack";
       drawAll();
@@ -241,7 +242,7 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
     const sel = selected();
     if (!sel) return;
 
-    if (target && target.side === "dacia") {
+    if (target && target.side === "enemy") {
       push();
       if (mode === "pila" && pilaTargets(s, sel).some((t) => t.id === target.id)) throwPila(s, sel, target);
       else if (meleeTargets(s, sel).some((t) => t.id === target.id)) melee(s, sel, target);
@@ -259,10 +260,10 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
     else history.pop();
   });
 
-  /** Tab through the Roman units that still have orders left. */
+  /** Tab through your own units that still have orders left. */
   function selectNext(): void {
-    if (busy || s.over || s.active !== "rome") return;
-    const ready = s.units.filter((u) => u.side === "rome" && !u.acted);
+    if (busy || s.over || s.active !== "player") return;
+    const ready = s.units.filter((u) => u.side === "player" && !u.acted);
     if (!ready.length) return;
     const at = ready.findIndex((u) => u.id === selectedId);
     selectedId = ready[(at + 1) % ready.length]!.id;
@@ -271,13 +272,12 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
   }
 
   const unbindKeys = bindKeys({
-    endTurn: () => { void runDacianTurn(); },
+    endTurn: () => { void runEnemyTurn(); },
     undo: () => undo(),
     next: () => selectNext(),
     deselect: () => { selectedId = null; mode = "attack"; drawAll(); },
     formation: (i) => {
-      const forms: Formation[] = ["line", "testudo", "cuneus", "orbis"];
-      const f = forms[i];
+      const f = FORMATION_ORDER[i];
       if (f && selected()?.tmpl.canFormation) applyFormation(f);
     },
     attackMode: () => { if (ours(selected())) { mode = "attack"; drawAll(); } },
@@ -289,8 +289,8 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
     threat: () => toggleThreat(),
   });
 
-  async function runDacianTurn(): Promise<void> {
-    if (busy || s.over || s.active !== "rome") return;
+  async function runEnemyTurn(): Promise<void> {
+    if (busy || s.over || s.active !== "player") return;
     busy = true;
     // The enemy turn is the commit point: what is done cannot be taken back.
     history = [];
@@ -299,7 +299,7 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
     drawAll();
     if (s.over) { busy = false; await finish(); return; }
     await sleep(350);
-    for (const unit of dacianTurn(s)) {
+    for (const unit of enemyTurn(s)) {
       selectedId = unit.id;
       drawAll();
       await sleep(420);
@@ -323,7 +323,7 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
   function confirmWithdraw(): void {
     showModal("Withdraw from the field?", el("p", { text: "The battle is recorded as a defeat. Nothing else is lost; you can fight it again." }), [
       { label: "Stay and fight", onClick: () => drawAll() },
-      { label: "Withdraw", onClick: () => { s.over = { won: false, reason: "The legion withdraws in good order." }; h.onFinished(s); }, primary: true },
+      { label: "Withdraw", onClick: () => { s.over = { won: false, reason: `${s.campaign.player.plural} withdraws in good order.` }; h.onFinished(s); }, primary: true },
     ]);
   }
 
@@ -357,7 +357,7 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
       el("h3", { text: "Objectives" }),
       ...scenario.objectives.map((o) => el("div", { class: "objective" }, el("span", { class: "pts", text: `+${o.points}` }), o.text)),
       el("h3", { text: "Reading the board" }),
-      el("p", { class: "muted small", text: "Red hatching marks every hex a Dacian unit could charge next turn; purple dots mark what their archers can reach. Press T to hide or show it." }),
+      el("p", { class: "muted small", text: `Red hatching marks every hex ${s.campaign.enemy.plural.toLowerCase()} could charge next turn; purple dots mark what their archers can reach. Press T to hide or show it.` }),
       el("h3", { text: "Keys" }),
       el("p", { class: "muted small", text: "Enter end turn · Tab next unit · 1-4 formation · A gladius · P pila · T enemy reach · U undo · Esc deselect · L this briefing" }),
     ), [{ label: "To the field", onClick: () => drawAll(), primary: true }]);

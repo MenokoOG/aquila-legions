@@ -4,6 +4,10 @@ import { setRoll } from "../client/src/engine/rules.js";
 
 /** Small fixtures so each test can state only the part of the board it cares about. */
 
+/**
+ * Fixtures still name the two armies of the first campaign, because that is what
+ * these tests are about. The engine underneath deals in player and enemy.
+ */
 export interface FieldSpec {
   rome?: UnitPlacement[];
   dacia?: UnitPlacement[];
@@ -14,12 +18,12 @@ export interface FieldSpec {
 
 export function scenario(spec: FieldSpec = {}): Scenario {
   return {
-    id: "test", order: 1, title: "Test Field", year: "101 AD", place: "Nowhere",
+    id: "test", campaignId: "dacia", order: 1, title: "Test Field", year: "101 AD", place: "Nowhere",
     briefing: "", tactic: "", lesson: "",
     width: 10, height: 8, maxTurns: spec.maxTurns ?? 10,
     terrain: spec.terrain ?? {},
-    rome: spec.rome ?? [],
-    dacia: spec.dacia ?? [],
+    player: spec.rome ?? [],
+    enemy: spec.dacia ?? [],
     objectives: spec.objectives ?? [{ kind: "win", text: "Clear the field", points: 100 }],
     unlocksCodex: [],
   };

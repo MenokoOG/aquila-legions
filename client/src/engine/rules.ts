@@ -1,10 +1,11 @@
 import type { Formation, Hex, Side, Terrain } from "../../../shared/types.js";
+import { FORMATIONS } from "../../../shared/data/formations.js";
 import { distance, key, neighbors, same } from "../hex.js";
 import {
-  type BattleState, type BattleUnit, isLegionary, log, terrainAt, unitAt, unitsOf,
+  type BattleState, type BattleUnit, faction, isCore, log, opposing, terrainAt, unitAt, unitsOf,
 } from "./battle.js";
 
-/** Movement, combat, and turn rules. Every number that shapes play lives here. */
+/** Movement, combat, and turn rules. Every number that shapes play lives here or in the formation table. */
 
 const ROUT_FRACTION = 0.25;
 const MELEE_SCALE = 3.0;
@@ -32,9 +33,7 @@ function terrainDefense(t: Terrain): number {
 }
 
 export function effectiveMove(u: BattleUnit): number {
-  if (u.formation === "orbis") return 0;
-  if (u.formation === "testudo") return 1;
-  return u.tmpl.move;
+  return FORMATIONS[u.formation].moveOverride ?? u.tmpl.move;
 }
 
 interface Search {
@@ -81,7 +80,7 @@ export function reachable(s: BattleState, u: BattleUnit): Map<string, number> {
 
 /**
  * Where the unit could stand on a fresh turn, whatever it has already done this one.
- * The board it walks is the board as it stands now, so a Roman cohort stepping into a
+ * The board it walks is the board as it stands now, so a cohort stepping into a
  * gap narrows the enemy's reach the moment it moves.
  */
 export function projectedReach(s: BattleState, u: BattleUnit): Map<string, number> {
@@ -118,7 +117,7 @@ export function adjacentEnemies(s: BattleState, u: BattleUnit): BattleUnit[] {
 }
 
 export function isFlanked(s: BattleState, target: BattleUnit): boolean {
-  if (target.formation === "orbis") return false;
+  if (FORMATIONS[target.formation].ignoresFlanking) return false;
   return adjacentEnemies(s, target).length >= 2;
 }
 
@@ -132,13 +131,11 @@ export function meleeTargets(s: BattleState, u: BattleUnit): BattleUnit[] {
 
 export function rangedTargets(s: BattleState, u: BattleUnit): BattleUnit[] {
   if (u.acted || u.tmpl.range === 0) return [];
-  return unitsOf(s, u.side === "rome" ? "dacia" : "rome").filter(
-    (e) => distance(u.at, e.at) <= u.tmpl.range,
-  );
+  return unitsOf(s, opposing(u.side)).filter((e) => distance(u.at, e.at) <= u.tmpl.range);
 }
 
 export function pilaTargets(s: BattleState, u: BattleUnit): BattleUnit[] {
-  if (u.acted || u.pila <= 0 || !isLegionary(u) || u.formation === "testudo") return [];
+  if (u.acted || u.pila <= 0 || !isCore(u) || FORMATIONS[u.formation].blocksPila) return [];
   return adjacentEnemies(s, u);
 }
 
@@ -158,21 +155,16 @@ function strength(u: BattleUnit): number {
 }
 
 function attackMultiplier(s: BattleState, a: BattleUnit, t: BattleUnit, charge: boolean): number {
-  let m = 1;
-  if (a.formation === "cuneus") m *= 1.4;
-  if (a.formation === "testudo") m *= 0.7;
-  if (a.formation === "orbis") m *= 0.8;
-  if (charge && a.kind === "cataphracts" && a.movedDist >= 2) m *= 1.5;
-  if (charge && a.kind === "ala_cavalry" && a.movedDist >= 2) m *= 1.25;
+  let m = FORMATIONS[a.formation].attackMul;
+  if (charge && a.movedDist >= 2) m *= a.tmpl.chargeBonus;
   if (isFlanked(s, t)) m *= 1.3;
   return m;
 }
 
 function defenseValue(s: BattleState, a: BattleUnit, t: BattleUnit, missile: boolean): number {
   let d = t.tmpl.defense * terrainDefense(terrainAt(s, t.at));
-  if (t.formation === "orbis") d *= 1.35;
-  if (t.formation === "cuneus") d *= 0.75;
-  if (a.kind === "falxmen" && !missile) d *= 0.7;
+  d *= FORMATIONS[t.formation].defenseMul;
+  if (!missile) d *= a.tmpl.armourPiercing;
   return d;
 }
 
@@ -194,7 +186,7 @@ export function damageToMen(
   s: BattleState, a: BattleUnit, t: BattleUnit, raw: number, missile: boolean,
 ): number {
   let dmg = raw;
-  if (missile && t.formation === "testudo") dmg *= 0.25;
+  if (missile) dmg *= FORMATIONS[t.formation].missileMul;
   const d = defenseValue(s, a, t, missile);
   return Math.min(t.men, Math.max(1, Math.round(dmg * (100 / (100 + d)))));
 }
@@ -207,8 +199,8 @@ export function wouldRout(t: BattleUnit, menLost: number): boolean {
 function applyDamage(s: BattleState, a: BattleUnit, t: BattleUnit, raw: number, missile: boolean): number {
   const men = damageToMen(s, a, t, raw, missile);
   t.men = Math.max(0, t.men - men);
-  if (t.side === "rome") s.track.romanLosses += men; else s.track.dacianLosses += men;
-  if (missile && t.side === "rome") s.track.missileLosses += men;
+  if (t.side === "player") s.track.playerLosses += men; else s.track.enemyLosses += men;
+  if (missile && t.side === "player") s.track.missileLosses += men;
   s.listener?.damage?.(t, men, missile);
   return men;
 }
@@ -218,11 +210,11 @@ function checkRout(s: BattleState, victim: BattleUnit, killer: BattleUnit, flank
   s.units = s.units.filter((u) => u.id !== victim.id);
   log(s, `${victim.label} breaks and routs.`, "system");
   s.listener?.rout?.(victim);
-  if (victim.side === "rome" && isLegionary(victim)) s.track.cohortsRouted += 1;
-  if (victim.side === "dacia") {
+  if (victim.side === "player" && isCore(victim)) s.track.cohortsRouted += 1;
+  if (victim.side === "enemy") {
     if (killer.formation === "cuneus") s.track.cuneusKills += 1;
     if (flanked) s.track.flankKills += 1;
-    if (killer.kind === "ala_cavalry") s.track.cavalryKills += 1;
+    if (killer.tmpl.mounted) s.track.cavalryKills += 1;
   }
 }
 
@@ -232,7 +224,7 @@ export function melee(s: BattleState, a: BattleUnit, t: BattleUnit): void {
   const dealt = applyDamage(s, a, t, attackPower(s, a, t, "melee") * roll(), false);
   a.acted = true;
   a.moved = true;
-  if (a.side === "rome" && isLegionary(a)) {
+  if (a.side === "player" && isCore(a)) {
     s.track.cohortsInMelee.add(a.id);
     if (!s.track.cohortsThrown.has(a.id)) s.track.pilaViolated = true;
   }
@@ -260,23 +252,24 @@ export function shoot(s: BattleState, a: BattleUnit, t: BattleUnit): void {
   if (!rangedTargets(s, a).some((x) => x.id === t.id)) return;
   const dealt = applyDamage(s, a, t, attackPower(s, a, t, "shoot") * roll(), true);
   a.acted = true;
-  const verb = a.kind === "scorpio" ? "looses bolts at" : "shoots";
+  const verb = a.tmpl.missileVerb ?? "shoots";
   log(s, `${a.label} ${verb} ${t.label}: ${dealt} fall${t.formation === "testudo" ? " (testudo holds)" : ""}.`);
   checkRout(s, t, a, isFlanked(s, t));
 }
 
 /** True when an enemy missile unit can reach this hex right now. */
 export function underMissileThreat(s: BattleState, u: BattleUnit): boolean {
-  const foe = u.side === "rome" ? "dacia" : "rome";
-  return unitsOf(s, foe).some((e) => e.tmpl.range > 0 && distance(e.at, u.at) <= e.tmpl.range);
+  return unitsOf(s, opposing(u.side)).some(
+    (e) => e.tmpl.range > 0 && distance(e.at, u.at) <= e.tmpl.range,
+  );
 }
 
-/** Tally the formation-discipline objectives at the end of each Roman turn. */
-function tallyRomanTurn(s: BattleState): void {
-  for (const u of unitsOf(s, "rome")) {
-    if (!isLegionary(u)) continue;
+/** Tally the formation-discipline objectives at the end of each player turn. */
+function tallyPlayerTurn(s: BattleState): void {
+  for (const u of unitsOf(s, "player")) {
+    if (!isCore(u)) continue;
     if (u.formation === "testudo" && underMissileThreat(s, u)) s.track.testudoTurnsUnderFire += 1;
-    if (u.formation === "orbis" && adjacentEnemies(s, u).some((e) => e.kind === "cataphracts")) {
+    if (u.formation === "orbis" && adjacentEnemies(s, u).some((e) => e.tmpl.mounted)) {
       s.track.orbisHeldTurns += 1;
     }
   }
@@ -284,10 +277,10 @@ function tallyRomanTurn(s: BattleState): void {
 
 export function checkOver(s: BattleState): void {
   if (s.over) return;
-  if (unitsOf(s, "dacia").length === 0) {
-    s.over = { won: true, reason: "The field is yours. The Dacians are broken." };
-  } else if (unitsOf(s, "rome").length === 0) {
-    s.over = { won: false, reason: "The legion is destroyed." };
+  if (unitsOf(s, "enemy").length === 0) {
+    s.over = { won: true, reason: `The field is yours. ${faction(s, "enemy").plural} are broken.` };
+  } else if (unitsOf(s, "player").length === 0) {
+    s.over = { won: false, reason: `${faction(s, "player").plural} is destroyed.` };
   } else if (s.turn > s.scenario.maxTurns) {
     s.over = { won: false, reason: "Night falls with the enemy still in the field." };
   }
@@ -295,12 +288,16 @@ export function checkOver(s: BattleState): void {
 }
 
 export function endTurn(s: BattleState): Side {
-  if (s.active === "rome") tallyRomanTurn(s);
+  if (s.active === "player") tallyPlayerTurn(s);
   for (const u of s.units) { u.moved = false; u.acted = false; u.movedDist = 0; }
-  s.active = s.active === "rome" ? "dacia" : "rome";
-  if (s.active === "rome") s.turn += 1;
+  s.active = opposing(s.active);
+  if (s.active === "player") s.turn += 1;
   checkOver(s);
-  if (!s.over) log(s, s.active === "rome" ? `Turn ${s.turn}. Your orders, Legatus.` : "The Dacians move.", "system");
+  if (!s.over) {
+    log(s, s.active === "player"
+      ? `Turn ${s.turn}. Your orders, Legatus.`
+      : `${faction(s, "enemy").plural} move.`, "system");
+  }
   return s.active;
 }
 

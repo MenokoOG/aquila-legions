@@ -13,6 +13,8 @@ export interface MenuHandlers {
 export function renderMenu(data: StateResponse, h: MenuHandlers): HTMLElement {
   const { save, scenarios } = data;
   const done = scenarios.filter((s) => s.record?.completed).length;
+  // One era for now. The hero reads whichever campaign the listed battles belong to.
+  const campaign = data.campaigns[0];
 
   const cards = scenarios.map((s) => {
     const rec = s.record;
@@ -34,8 +36,8 @@ export function renderMenu(data: StateResponse, h: MenuHandlers): HTMLElement {
     el("div", { class: "hero" },
       el("div", { class: "eagle", text: "SPQR" }),
       el("h1", { text: "Aquila" }),
-      el("p", { class: "sub", text: "Legions of Trajan · The Dacian Wars, 101 to 106 AD" }),
-      el("p", { class: "intro", text: "Six battles. Each one exists to teach a single thing the legion did well. Win, and the history behind the tactic unlocks in the Codex." }),
+      el("p", { class: "sub", text: campaign ? `${campaign.title} · ${campaign.subtitle}` : "" }),
+      el("p", { class: "intro", text: campaign?.blurb ?? "" }),
     ),
     el("div", { class: "commander-row" },
       el("div", { class: "stat" }, el("span", { class: "label", text: "Commander" }), save.commander),
