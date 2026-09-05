@@ -1,5 +1,6 @@
 import type { CodexView } from "../api.js";
-import { FORMATION_INFO, UNITS } from "../../../shared/data/units.js";
+import { UNITS } from "../../../shared/data/units.js";
+import { FORMATIONS } from "../../../shared/data/formations.js";
 import { button, el } from "./dom.js";
 
 /** Codex screen: unlocked history, plus the always-open field manual for units and formations. */
@@ -21,7 +22,7 @@ export function renderCodex(entries: CodexView[], onBack: () => void): HTMLEleme
     el("p", { text: "Win the battle that teaches this to read it." }),
   );
 
-  const formations = Object.entries(FORMATION_INFO).map(([id, f]) => el("article", { class: "manual-card" },
+  const formations = Object.entries(FORMATIONS).map(([id, f]) => el("article", { class: "manual-card" },
     el("h4", {}, `${f.name} `, el("span", { class: "latin", text: f.latin })),
     el("div", { class: "manual-rule", text: f.short }),
     el("p", { text: f.history }),

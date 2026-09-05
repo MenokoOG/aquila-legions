@@ -194,8 +194,8 @@ canvas { display: block; margin: 0 auto; cursor: pointer; border-radius: 6px; ma
 
 .unit-card { margin-top: 0.6rem; padding: 0.7rem; border-radius: 8px; border: 1px solid rgba(90,60,20,0.3); background: rgba(255,250,235,0.6); }
 .unit-card.empty { color: var(--muted); font-style: italic; }
-.unit-card.rome { border-left: 4px solid var(--rome); }
-.unit-card.dacia { border-left: 4px solid var(--dacia); }
+.unit-card.player { border-left: 4px solid var(--rome); }
+.unit-card.enemy { border-left: 4px solid var(--dacia); }
 .unit-name { font-weight: 600; font-size: 1.05rem; }
 .unit-men { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; margin: 0.3rem 0; }
 .bar { flex: 1; height: 8px; background: rgba(0,0,0,0.25); border-radius: 4px; overflow: hidden; }
@@ -213,8 +213,8 @@ canvas { display: block; margin: 0 auto; cursor: pointer; border-radius: 6px; ma
 
 .log-list { max-height: 560px; overflow-y: auto; font-size: 0.88rem; }
 .log-line { padding: 0.25rem 0.3rem; border-bottom: 1px dashed rgba(90,60,20,0.2); }
-.log-line.rome { border-left: 3px solid var(--rome); }
-.log-line.dacia { border-left: 3px solid var(--dacia); }
+.log-line.player { border-left: 3px solid var(--rome); }
+.log-line.enemy { border-left: 3px solid var(--dacia); }
 .log-line.system { border-left: 3px solid var(--gold); font-style: italic; }
 .log-turn { font-family: "Cinzel", serif; font-size: 0.68rem; color: var(--muted); margin-right: 0.4rem; }
 
@@ -229,8 +229,8 @@ canvas { display: block; margin: 0 auto; cursor: pointer; border-radius: 6px; ma
 .codex-entry.locked { opacity: 0.5; }
 .codex-entry h3, .manual-card h4 { text-transform: none; color: var(--rome-deep); font-size: 1.1rem; margin: 0.1rem 0 0.4rem; }
 .codex-era { font-family: "Cinzel", serif; font-size: 0.7rem; color: var(--gold); letter-spacing: 0.15em; text-transform: uppercase; }
-.manual-card.dacia { border-left: 4px solid var(--dacia); }
-.manual-card.rome { border-left: 4px solid var(--rome); }
+.manual-card.enemy { border-left: 4px solid var(--dacia); }
+.manual-card.player { border-left: 4px solid var(--rome); }
 .manual-rule { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.3rem; }
 .tags { margin-top: 0.4rem; display: flex; gap: 0.3rem; flex-wrap: wrap; }
 .tag { font-size: 0.7rem; padding: 0.1rem 0.5rem; border-radius: 999px; background: rgba(201,162,39,0.25); text-transform: uppercase; letter-spacing: 0.08em; }

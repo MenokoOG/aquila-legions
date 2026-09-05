@@ -1,7 +1,7 @@
 import type { Formation } from "../../../shared/types.js";
-import { FORMATION_INFO } from "../../../shared/data/units.js";
+import { FORMATIONS, FORMATION_ORDER } from "../../../shared/data/formations.js";
 import type { BattleState, BattleUnit } from "../engine/battle.js";
-import { terrainAt } from "../engine/battle.js";
+import { faction, terrainAt } from "../engine/battle.js";
 import { type Forecast, describeRange } from "../engine/forecast.js";
 import { type ObjectiveProgress, allProgress } from "../engine/objectives.js";
 import { canChangeFormation, effectiveMove, pilaTargets, underMissileThreat } from "../engine/rules.js";
@@ -55,7 +55,7 @@ export function renderLeftPanel(root: HTMLElement, s: BattleState, v: HudView, h
     ),
     el("div", { class: "turn-row" },
       el("div", { class: "stat" }, el("span", { class: "label", text: "Turn" }), `${s.turn} / ${sc.maxTurns}`),
-      el("div", { class: "stat" }, el("span", { class: "label", text: "Side" }), s.active === "rome" ? "Rome" : "Dacia"),
+      el("div", { class: "stat" }, el("span", { class: "label", text: "Side" }), faction(s, s.active).name),
       el("div", { class: "stat" }, el("span", { class: "label", text: "Teaches" }), sc.tactic),
     ),
     renderObjectives(s),
@@ -63,12 +63,12 @@ export function renderLeftPanel(root: HTMLElement, s: BattleState, v: HudView, h
     inspector,
   );
 
-  const orders = v.selected && s.active === "rome" && !v.busy ? renderOrders(s, v, h) : null;
+  const orders = v.selected && s.active === "player" && !v.busy ? renderOrders(s, v, h) : null;
   if (orders) root.append(orders);
 
   root.append(
     el("div", { class: "end-row" },
-      button(v.busy ? "The Dacians move..." : "End turn  ⏎", h.onEndTurn, "btn primary wide"),
+      button(v.busy ? `${faction(s, "enemy").plural} move...` : "End turn  ⏎", h.onEndTurn, "btn primary wide"),
       el("div", { class: "form-row spread" },
         button("Undo  U", h.onUndo, "btn undo"),
         button("Restart", h.onRestart, "btn quiet"),
@@ -81,7 +81,7 @@ export function renderLeftPanel(root: HTMLElement, s: BattleState, v: HudView, h
   updateInspector(root, s, v);
 
   const endBtn = root.querySelector<HTMLButtonElement>(".end-row .primary");
-  if (endBtn) endBtn.disabled = v.busy || s.active !== "rome" || s.over !== null;
+  if (endBtn) endBtn.disabled = v.busy || s.active !== "player" || s.over !== null;
   const undoBtn = root.querySelector<HTMLButtonElement>(".end-row .btn.undo");
   if (undoBtn) undoBtn.disabled = !v.canUndo || v.busy || s.over !== null;
 }
@@ -140,8 +140,8 @@ function renderObjectives(s: BattleState): HTMLElement {
 function renderUnitCard(u: BattleUnit | null, s: BattleState, selected: boolean): HTMLElement {
   if (!u) return el("div", { class: "unit-card empty", text: "Select a unit. Gold hexes are moves; red rings are targets." });
   const t = terrainAt(s, u.at);
-  const f = FORMATION_INFO[u.formation];
-  const exposed = u.side === "rome" && underMissileThreat(s, u) && u.formation !== "testudo";
+  const f = FORMATIONS[u.formation];
+  const exposed = u.side === "player" && underMissileThreat(s, u) && u.formation !== "testudo";
   return el("div", { class: `unit-card ${u.side}${selected ? " selected" : ""}` },
     el("div", { class: "unit-name" }, u.label, el("span", { class: "latin", text: ` ${u.tmpl.latin}` })),
     el("div", { class: "unit-men" },
@@ -149,9 +149,9 @@ function renderUnitCard(u: BattleUnit | null, s: BattleState, selected: boolean)
       `${u.men} / ${u.maxMen} men`,
     ),
     el("div", { class: "unit-stats", text: `Attack ${u.tmpl.attack} · Defense ${u.tmpl.defense} · Move ${effectiveMove(u)}${u.tmpl.range ? ` · Range ${u.tmpl.range}` : ""}${u.pila ? " · Pila ready" : ""}` }),
-    el("div", { class: "unit-stats", text: `Formation: ${f?.name ?? u.formation} · Terrain: ${t}` }),
+    el("div", { class: "unit-stats", text: `Formation: ${f.name} · Terrain: ${t}` }),
     el("div", { class: "unit-stats", text: `Breaks at ${Math.ceil(u.maxMen * 0.25)} men` }),
-    exposed ? el("div", { class: "warn", text: "Under Dacian bow range, out of testudo." }) : null,
+    exposed ? el("div", { class: "warn", text: `Under ${faction(s, "enemy").adjective} bow range, out of testudo.` }) : null,
     el("p", { class: "blurb", text: u.tmpl.blurb }),
   );
 }
@@ -178,7 +178,7 @@ function renderForecast(f: Forecast): HTMLElement {
 
 function renderOrders(s: BattleState, v: HudView, h: HudHandlers): HTMLElement {
   const u = v.selected!;
-  const forms: Formation[] = ["line", "testudo", "cuneus", "orbis"];
+  const forms = FORMATION_ORDER;
   const canForm = canChangeFormation(u);
   const hasPila = pilaTargets(s, u).length > 0;
 
@@ -186,13 +186,13 @@ function renderOrders(s: BattleState, v: HudView, h: HudHandlers): HTMLElement {
     ? el("div", { class: "order-group" },
       el("h3", { text: canForm ? "Formation" : "Formation (set before moving)" }),
       el("div", { class: "form-row" }, ...forms.map((f, i) => {
-        const info = FORMATION_INFO[f]!;
+        const info = FORMATIONS[f];
         const b = button(`${info.name}  ${i + 1}`, () => h.onFormation(f), `btn form${u.formation === f ? " active" : ""}`);
         b.title = info.short;
         b.disabled = !canForm && u.formation !== f;
         return b;
       })),
-      el("div", { class: "muted small", text: FORMATION_INFO[u.formation]?.short ?? "" }),
+      el("div", { class: "muted small", text: FORMATIONS[u.formation].short }),
     )
     : null;
 

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import type { BattleResult } from "../shared/types.js";
 import { SCENARIOS } from "../shared/data/scenarios.js";
+import { CAMPAIGNS } from "../shared/data/campaigns.js";
 import { CODEX } from "../shared/data/codex.js";
 import { SaveStore } from "./store.js";
 import { applyResult, isUnlocked } from "./progress.js";
@@ -12,11 +13,12 @@ export function buildRouter(store: SaveStore): Router {
   router.get("/state", (_req, res) => {
     const save = store.load();
     const scenarios = SCENARIOS.map((s) => ({
-      id: s.id, order: s.order, title: s.title, year: s.year, place: s.place, tactic: s.tactic,
+      id: s.id, campaignId: s.campaignId, order: s.order, title: s.title, year: s.year,
+      place: s.place, tactic: s.tactic,
       unlocked: isUnlocked(save, s.id),
       record: save.scenarios[s.id] ?? null,
     }));
-    res.json({ save, scenarios });
+    res.json({ save, campaigns: CAMPAIGNS, scenarios });
   });
 
   router.get("/scenario/:id", (req, res) => {

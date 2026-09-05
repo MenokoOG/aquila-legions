@@ -4,7 +4,7 @@ import type {
 } from "../shared/types.js";
 import { SCENARIO_BY_ID, SCENARIOS } from "../shared/data/scenarios.js";
 import { CODEX, CODEX_BY_ID } from "../shared/data/codex.js";
-import { RANKS } from "../shared/data/units.js";
+import { RANKS } from "../shared/data/ranks.js";
 
 /** Pure progression rules: which objectives a battle met, points, codex unlocks, rank. */
 

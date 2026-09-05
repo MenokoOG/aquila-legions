@@ -6,7 +6,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- **The engine no longer knows who is fighting.** `Side` is `"player" | "enemy"`; a campaign record (`shared/data/campaigns.ts`) supplies the words on screen, so the log still reads "The Dacians move." while `rules.ts` contains neither name. Ten files named one or both peoples before this. See `docs/adr/0002-campaign-registry-and-generic-sides.md`.
+- `UnitKind` is derived from the roster files rather than written out by hand. Rosters split into `shared/data/units-rome.ts` and `shared/data/units-dacia.ts`; `shared/data/units.ts` assembles them and the type follows the data.
+- Formations are data (`shared/data/formations.ts`). `attackMul`, `defenseMul`, `missileMul`, `moveOverride`, `ignoresFlanking` and `blocksPila` were literals inside branches in `rules.ts`; combat now reads the table.
+- Unit behaviour the rules used to match on kind is now a trait on the template: `core`, `mounted`, `chargeBonus`, `armourPiercing`, `missileVerb`, `glyph`. Cataphracts charge harder because of a number on their template, not because `rules.ts` knows their name. The renderer's hardcoded glyph map is gone with it.
+- `Scenario.rome` / `.dacia` are `Scenario.player` / `.enemy`, and each scenario carries a `campaignId`. `BattleStats.romanLosses` / `.dacianLosses` are `playerLosses` / `enemyLosses`.
+- `/api/state` returns the campaign list; the menu hero reads its title, subtitle and blurb from the campaign instead of having the Dacian Wars typed into it.
+
+Behaviour is unchanged. All 74 existing tests pass with no expectation altered: the only test edits are renames plus one added fixture field.
+
 ### Added
+
+- `test/campaign.test.ts`: 11 tests over the seams a second era will lean on. Every scenario points at a real campaign, every placement names a unit that exists and puts it on the side the scenario expects, every unit has a board glyph, every formation offered in the orders panel is defined, and each of the six scenarios plays through to a decision.
 
 - Enemy reach overlay (`client/src/engine/threat.ts`). Every hex a Dacian unit could strike on its next turn is shaded on the board: red hatching where a charge can arrive, purple dots where their archers reach. It reports capability, not the AI's intent, so a player who plans against it is never ambushed by the AI changing its mind. Toggle with `T` or the button under the board.
 - Board bar under the map: the overlay switch, a running count of threatened hexes, and a key to every colour the board uses.

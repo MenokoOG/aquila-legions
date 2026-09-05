@@ -1,5 +1,5 @@
 import type { Objective } from "../../../shared/types.js";
-import { type BattleState, isLegionary, unitsOf } from "./battle.js";
+import { type BattleState, faction, isCore, unitsOf } from "./battle.js";
 
 /**
  * Live objective progress, read straight off the trackers the rules already keep.
@@ -32,16 +32,16 @@ export function objectiveProgress(o: Objective, s: BattleState): ObjectiveProgre
   const t = s.track;
   switch (o.kind) {
     case "win": {
-      const left = unitsOf(s, "dacia").length;
+      const left = unitsOf(s, "enemy").length;
       return {
         objective: o,
         status: s.over ? (s.over.won ? "done" : "failed") : "pending",
         detail: left === 0 ? "field cleared" : `${left} enemy left`,
-        hint: "Rout or destroy every Dacian unit before the turn limit. A unit breaks once it falls under a quarter of its men.",
+        hint: `Rout or destroy every ${faction(s, "enemy").adjective} unit before the turn limit. A unit breaks once it falls under a quarter of its men.`,
       };
     }
     case "pila_before_melee": {
-      const cohorts = unitsOf(s, "rome").filter(isLegionary).length;
+      const cohorts = unitsOf(s, "player").filter(isCore).length;
       return {
         objective: o,
         status: t.pilaViolated ? "failed" : t.cohortsThrown.size >= cohorts && cohorts > 0 ? "done" : "pending",
@@ -70,9 +70,9 @@ export function objectiveProgress(o: Objective, s: BattleState): ObjectiveProgre
         hint: "Pull a battered cohort out of contact before it drops under a quarter strength. Auxiliaries routing does not count against you.",
       };
     case "testudo_under_fire":
-      return counted(o, t.testudoTurnsUnderFire, "End your turn with a cohort in testudo while Dacian archers can still reach it. Each such cohort-turn counts once.");
+      return counted(o, t.testudoTurnsUnderFire, `End your turn with a cohort in testudo while ${faction(s, "enemy").adjective} archers can still reach it. Each such cohort-turn counts once.`);
     case "orbis_held":
-      return counted(o, t.orbisHeldTurns, "End your turn with a cohort in orbis and cataphracts adjacent to it. Orbis cannot move, so form it where the charge will arrive.");
+      return counted(o, t.orbisHeldTurns, "End your turn with a cohort in orbis and horsemen adjacent to it. Orbis cannot move, so form it where the charge will arrive.");
     case "cavalry_kills":
       return counted(o, t.cavalryKills, "Let the ala land the killing blow. Charge two or more hexes for the bonus, and go around the flank rather than into the front.");
   }

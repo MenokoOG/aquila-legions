@@ -7,7 +7,7 @@ import { applyResult, freshSave, isUnlocked, objectiveMet, rankFor, sanitizeSave
 
 function stats(over: Partial<BattleStats> = {}): BattleStats {
   return {
-    won: true, turns: 6, romanLosses: 100, dacianLosses: 900,
+    won: true, turns: 6, playerLosses: 100, enemyLosses: 900,
     pilaBeforeMelee: true, missileLosses: 0, cuneusKills: 0, flankKills: 0, cavalryKills: 0,
     cohortsRouted: 0, testudoTurnsUnderFire: 0, orbisHeldTurns: 0,
     ...over,

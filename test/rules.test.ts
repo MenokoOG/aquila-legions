@@ -115,7 +115,7 @@ describe("combat", () => {
     const before = target.men;
     melee(s, at(s, 4, 3), target);
     ok(target.men < before);
-    strictEqual(s.track.dacianLosses, before - target.men);
+    strictEqual(s.track.enemyLosses, before - target.men);
   });
 
   it("hits harder from a wedge than from the line", () => {
@@ -132,7 +132,7 @@ describe("combat", () => {
     setFormation(wedge, at(wedge, 4, 3), "cuneus");
     melee(wedge, at(wedge, 4, 3), at(wedge, 5, 3));
 
-    ok(wedge.track.dacianLosses > line.track.dacianLosses);
+    ok(wedge.track.enemyLosses > line.track.enemyLosses);
   });
 
   it("lets a testudo shrug off most of an arrow storm", () => {
@@ -158,7 +158,7 @@ describe("combat", () => {
       dacia: [{ kind: "dacian_archers", at: { q: 6, r: 3 } }],
     });
     shoot(s, at(s, 6, 3), at(s, 4, 3));
-    strictEqual(s.track.missileLosses, s.track.romanLosses);
+    strictEqual(s.track.missileLosses, s.track.playerLosses);
   });
 
   it("throws pila once, without retaliation, and only while they are on the shoulder", () => {
@@ -169,7 +169,7 @@ describe("combat", () => {
     const cohort = at(s, 4, 3);
     throwPila(s, cohort, at(s, 5, 3));
     strictEqual(cohort.pila, 0);
-    strictEqual(s.track.romanLosses, 0, "a volley draws no counter-attack");
+    strictEqual(s.track.playerLosses, 0, "a volley draws no counter-attack");
     strictEqual(pilaTargets(s, cohort).length, 0, "and there is no second volley");
   });
 
@@ -192,7 +192,7 @@ describe("combat", () => {
     const cohort = at(s, 4, 3);
     setFormation(s, cohort, "cuneus");
     melee(s, cohort, dacian);
-    strictEqual(unitsOf(s, "dacia").length, 0);
+    strictEqual(unitsOf(s, "enemy").length, 0);
     strictEqual(s.track.cuneusKills, 1);
   });
 
@@ -225,10 +225,10 @@ describe("the turn", () => {
       dacia: [{ kind: "warband", at: { q: 8, r: 3 } }],
     });
     at(s, 4, 3).moved = true;
-    strictEqual(endTurn(s), "dacia");
+    strictEqual(endTurn(s), "enemy");
     strictEqual(s.turn, 1);
     strictEqual(at(s, 4, 3).moved, false);
-    strictEqual(endTurn(s), "rome");
+    strictEqual(endTurn(s), "player");
     strictEqual(s.turn, 2);
   });
 

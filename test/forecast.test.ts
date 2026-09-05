@@ -26,8 +26,8 @@ describe("combat forecast", () => {
       melee(s, at(s, 4, 3), target);
       const dealt = before - target.men;
       ok(dealt >= f.dealt.min && dealt <= f.dealt.max, `dealt ${dealt} outside ${f.dealt.min}-${f.dealt.max}`);
-      ok(s.track.romanLosses >= f.taken!.min && s.track.romanLosses <= f.taken!.max,
-        `taken ${s.track.romanLosses} outside ${f.taken!.min}-${f.taken!.max}`);
+      ok(s.track.playerLosses >= f.taken!.min && s.track.playerLosses <= f.taken!.max,
+        `taken ${s.track.playerLosses} outside ${f.taken!.min}-${f.taken!.max}`);
     }
   });
 
