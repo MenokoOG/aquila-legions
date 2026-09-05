@@ -9,6 +9,8 @@ export interface BoardBarView {
   showThreat: boolean;
   /** How many hexes the enemy currently bears on. Nothing to say when the layer is off. */
   threatened: number;
+  /** Timings, when the page was opened with `?perf=1`. Empty otherwise. */
+  perf?: string;
 }
 
 const KEYS: { swatch: string; text: string }[] = [
@@ -40,4 +42,5 @@ export function renderBoardBar(root: HTMLElement, v: BoardBarView, onToggle: () 
         el("span", { text: k.text }),
       ))),
   );
+  if (v.perf) root.append(el("span", { class: "muted small perf", text: v.perf }));
 }

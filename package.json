@@ -10,6 +10,7 @@
     "start": "npm run build && tsx server/index.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p client/tsconfig.json --noEmit",
     "test": "node --import tsx --test \"test/**/*.test.ts\"",
+    "bench": "node --import tsx scripts/bench.ts",
     "check": "npm run typecheck && npm test"
   },
   "dependencies": {

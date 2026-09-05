@@ -6,6 +6,30 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Performance
+
+Hovering the board re-ran the pathfinder twice and repainted the ground from scratch. Measured with `npm run bench` on the worst board the game ships (Sarmizegetusa, 14x10, 19 units), median of 5 runs, same machine before and after:
+
+| | before | after | |
+|---|---|---|---|
+| `reachable`, one unit | 35.3 us | 6.1 us | 5.8x |
+| `pathTo`, one hover | 47.2 us | 6.2 us | 7.6x |
+| `threatMap`, after every order | 877.8 us | 177.4 us | 4.9x |
+| hover cost (both walks) | 93.3 us | 19.9 us | 4.7x |
+
+- The pathfinder walks the board on integer indices instead of `"q,r"` strings. `neighbors()` allocated an array and ran two cube conversions per call, and `terrainAt()` built a string key per lookup; both were being called for every neighbour of every hex walked. Neighbour lists are now computed once per board size and terrain once per scenario, both cached. The frontier is bucketed by cost rather than re-sorted, which is exact here because terrain costs only 1 or 2. Occupancy is indexed once per walk instead of scanned per neighbour.
+- `reachable` and `pathTo` were each a full walk of the board, and hovering a reachable hex ran both. `movement()` now returns the walk and `pathFrom()` reads a route out of it, so a hover pays for one.
+- The threat overlay swept outward from each firing position instead of testing all 140 hexes against every position. For a missile unit that was 140 hexes x ~30 positions of cube-distance arithmetic, on every order.
+- **Terrain is drawn once per battle, not once per frame.** It was being rebuilt on every mouse move: a radial gradient constructed per hex, a hex path stroked, and a procedural scatter of trees, hill contours or boulders painted on top. It is now rendered into an offscreen canvas and blitted, keyed on scenario and device pixel ratio so a monitor change repaints rather than stretching a stale bitmap. What remains of the per-hex pass skips any hex with no threat, no move and no cursor on it.
+
+Not changed: `fromPixel` measures 0.6 us and was never the bottleneck it was assumed to be, so the hex picker was left alone rather than rewritten for no gain.
+
+### Added
+
+- `npm run bench` (`scripts/bench.ts`): timings for the hot paths behind a mouse move, reported as a median of 5 samples with the range, because a single pass swings by a third on a busy machine.
+- `?perf=1` on the battle screen shows median and p95 for the board repaint and the threat map under the board. Drawing cost can only be measured in the browser doing the drawing.
+- `test/perf-parity.test.ts`: the pre-speedup `fromPixel` and Dijkstra kept as reference oracles, plus checks that every path is walkable and ends where asked, that the overlay never marks a hex twice for one unit or marks one off the board, and that a shaded missile hex is one a shooter could actually stand and reach. A faster version is only allowed to be faster.
+
 ### Changed
 
 - **The engine no longer knows who is fighting.** `Side` is `"player" | "enemy"`; a campaign record (`shared/data/campaigns.ts`) supplies the words on screen, so the log still reads "The Dacians move." while `rules.ts` contains neither name. Ten files named one or both peoples before this. See `docs/adr/0002-campaign-registry-and-generic-sides.md`.

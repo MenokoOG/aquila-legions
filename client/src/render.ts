@@ -266,38 +266,89 @@ function drawFloaters(ctx: CanvasRenderingContext2D, fx: Effects): void {
   ctx.restore();
 }
 
+/**
+ * The ground, drawn once per battle instead of once per frame.
+ *
+ * Terrain does not change while a battle runs, but it was being rebuilt on every
+ * mouse move: a radial gradient constructed per hex, a hex path stroked, and a
+ * procedural scatter of trees, contours or boulders on top. That is the most
+ * expensive thing on the board and the only part of it that never moves. Now it is
+ * painted into an offscreen canvas and blitted.
+ *
+ * Keyed on the scenario and the device pixel ratio, so dragging the window to a
+ * monitor with different scaling repaints it rather than blowing up a stale bitmap.
+ */
+interface TerrainLayer {
+  canvas: HTMLCanvasElement;
+  dpr: number;
+}
+
+const TERRAIN_LAYERS = new WeakMap<BattleState["scenario"], TerrainLayer>();
+
+function terrainLayer(s: BattleState, dpr: number): HTMLCanvasElement {
+  const cached = TERRAIN_LAYERS.get(s.scenario);
+  if (cached && cached.dpr === dpr) return cached.canvas;
+
+  const { width, height } = s.scenario;
+  const { w, h } = boardPixelSize(width, height);
+  const layer = document.createElement("canvas");
+  layer.width = Math.round(w * dpr);
+  layer.height = Math.round(h * dpr);
+  const lc = layer.getContext("2d");
+  if (lc) {
+    lc.setTransform(dpr, 0, 0, dpr, 0, 0);
+    for (let r = 0; r < height; r++) {
+      for (let q = 0; q < width; q++) {
+        const hx = { q, r };
+        const { x, y } = toPixel(hx);
+        const t = terrainAt(s, hx);
+        const [c1, c2] = TERRAIN_FILL[t];
+        const g = lc.createRadialGradient(x - 8, y - 10, 4, x, y, HEX_SIZE);
+        g.addColorStop(0, c1);
+        g.addColorStop(1, c2);
+        hexPath(lc, x, y);
+        lc.fillStyle = g;
+        lc.fill();
+        lc.strokeStyle = "rgba(40,30,10,0.45)";
+        lc.lineWidth = 1.2;
+        lc.stroke();
+        drawTerrainDetail(lc, t, x, y, q * 31 + r * 17);
+      }
+    }
+  }
+  TERRAIN_LAYERS.set(s.scenario, { canvas: layer, dpr });
+  return layer;
+}
+
 export function render(canvas: HTMLCanvasElement, s: BattleState, hl: Highlights, fx?: Effects): void {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
   const { width, height } = s.scenario;
   const { w, h } = boardPixelSize(width, height);
   ctx.clearRect(0, 0, w, h);
+  ctx.drawImage(terrainLayer(s, window.devicePixelRatio || 1), 0, 0, w, h);
 
+  // What is left of the per-hex pass is only what actually changes: the enemy's
+  // reach, this unit's moves, and the hex under the cursor. Hexes with none of
+  // those cost nothing.
+  const hoverKey = hl.hover ? key(hl.hover) : null;
   for (let r = 0; r < height; r++) {
     for (let q = 0; q < width; q++) {
       const hx = { q, r };
-      const { x, y } = toPixel(hx);
-      const t = terrainAt(s, hx);
-      const [c1, c2] = TERRAIN_FILL[t];
-      const g = ctx.createRadialGradient(x - 8, y - 10, 4, x, y, HEX_SIZE);
-      g.addColorStop(0, c1);
-      g.addColorStop(1, c2);
-      hexPath(ctx, x, y);
-      ctx.fillStyle = g;
-      ctx.fill();
-      ctx.strokeStyle = "rgba(40,30,10,0.45)";
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-      drawTerrainDetail(ctx, t, x, y, q * 31 + r * 17);
-      if (hl.threat) drawThreat(ctx, hx, x, y, hl.threat);
-
       const k = key(hx);
-      if (hl.reachable.has(k)) {
+      const reach = hl.reachable.has(k);
+      const isHover = hoverKey === k;
+      const threatened = hl.threat ? hl.threat.has(k) : false;
+      if (!reach && !isHover && !threatened) continue;
+
+      const { x, y } = toPixel(hx);
+      if (threatened && hl.threat) drawThreat(ctx, hx, x, y, hl.threat);
+      if (reach) {
         hexPath(ctx, x, y, HEX_SIZE - 2);
         ctx.fillStyle = "rgba(255,225,120,0.28)";
         ctx.fill();
       }
-      if (hl.hover && hl.hover.q === q && hl.hover.r === r) {
+      if (isHover) {
         hexPath(ctx, x, y, HEX_SIZE - 1);
         ctx.strokeStyle = "rgba(255,255,255,0.7)";
         ctx.lineWidth = 2;

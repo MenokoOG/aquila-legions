@@ -105,6 +105,28 @@ export function terrainAt(s: BattleState, h: Hex): Terrain {
   return s.scenario.terrain[key(h)] ?? "plain";
 }
 
+/**
+ * Terrain for a whole board as a flat array, cached per scenario.
+ *
+ * `terrainAt` builds a "q,r" string on every call, which the pathfinder was doing
+ * for every neighbour of every hex it walked. A scenario's terrain is fixed for the
+ * life of the battle, so it is laid out once and read by index after that.
+ */
+const TERRAIN_CACHE = new WeakMap<Scenario, Terrain[]>();
+
+export function terrainGrid(scenario: Scenario): Terrain[] {
+  const cached = TERRAIN_CACHE.get(scenario);
+  if (cached) return cached;
+  const grid: Terrain[] = new Array<Terrain>(scenario.width * scenario.height);
+  for (let r = 0; r < scenario.height; r++) {
+    for (let q = 0; q < scenario.width; q++) {
+      grid[r * scenario.width + q] = scenario.terrain[`${q},${r}`] ?? "plain";
+    }
+  }
+  TERRAIN_CACHE.set(scenario, grid);
+  return grid;
+}
+
 export function unitAt(s: BattleState, h: Hex): BattleUnit | undefined {
   return s.units.find((u) => u.at.q === h.q && u.at.r === h.r);
 }

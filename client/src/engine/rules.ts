@@ -1,8 +1,8 @@
 import type { Formation, Hex, Side, Terrain } from "../../../shared/types.js";
 import { FORMATIONS } from "../../../shared/data/formations.js";
-import { distance, key, neighbors, same } from "../hex.js";
+import { distance, hexAt, indexOf, key, neighborTable, neighbors, same } from "../hex.js";
 import {
-  type BattleState, type BattleUnit, faction, isCore, log, opposing, terrainAt, unitAt, unitsOf,
+  type BattleState, type BattleUnit, faction, isCore, log, opposing, terrainAt, terrainGrid, unitAt, unitsOf,
 } from "./battle.js";
 
 /** Movement, combat, and turn rules. Every number that shapes play lives here or in the formation table. */
@@ -36,8 +36,11 @@ export function effectiveMove(u: BattleUnit): number {
   return FORMATIONS[u.formation].moveOverride ?? u.tmpl.move;
 }
 
-interface Search {
+/** Where a unit can go and how it would get there. One walk of the board answers both. */
+export interface Movement {
+  /** Hexes it can end on, mapped to what the trip costs. */
   cost: Map<string, number>;
+  /** For each reachable hex, the hex stepped from. Walk it backwards for a route. */
   from: Map<string, Hex>;
 }
 
@@ -45,37 +48,73 @@ interface Search {
  * Dijkstra over move points. Enemies block; friends can be crossed but not stopped on.
  * `fresh` ignores orders already spent this turn, which is how the threat overlay asks
  * where a unit could go once its turn comes round again.
+ *
+ * Two things keep this cheap enough to run on every mouse move. Occupancy is indexed
+ * once up front rather than scanned per neighbour, and the frontier is bucketed by
+ * cost rather than re-sorted: terrain costs only 1 or 2, so a hex is never relaxed
+ * into a bucket that has already been drained, which is what makes buckets exact here.
  */
-function search(s: BattleState, u: BattleUnit, fresh = false): Search {
+export function movement(s: BattleState, u: BattleUnit, fresh = false): Movement {
   const budget = effectiveMove(u);
-  const cost = new Map<string, number>();
-  const from = new Map<string, Hex>();
-  if ((!fresh && (u.moved || u.acted)) || budget === 0) return { cost, from };
-  const best = new Map<string, number>([[key(u.at), 0]]);
-  const frontier: { h: Hex; cost: number }[] = [{ h: u.at, cost: 0 }];
+  if ((!fresh && (u.moved || u.acted)) || budget === 0) return { cost: new Map(), from: new Map() };
+
   const { width, height } = s.scenario;
-  while (frontier.length) {
-    frontier.sort((a, b) => a.cost - b.cost);
-    const cur = frontier.shift()!;
-    for (const n of neighbors(cur.h, width, height)) {
-      const occupant = unitAt(s, n);
-      if (occupant && occupant.side !== u.side) continue;
-      const c = cur.cost + moveCost(terrainAt(s, n));
-      if (c > budget) continue;
-      const k = key(n);
-      if ((best.get(k) ?? Infinity) <= c) continue;
-      best.set(k, c);
-      from.set(k, cur.h);
-      frontier.push({ h: n, cost: c });
-      if (!occupant) cost.set(k, c);
+  const cells = width * height;
+  const table = neighborTable(width, height);
+  const terrain = terrainGrid(s.scenario);
+
+  // -1 empty, 0 a friend to cross, 1 an enemy that blocks.
+  const blocked = new Int8Array(cells).fill(-1);
+  for (const other of s.units) blocked[indexOf(other.at, width)] = other.side === u.side ? 0 : 1;
+
+  const UNREACHED = 127;
+  const best = new Int8Array(cells).fill(UNREACHED);
+  const from = new Int32Array(cells).fill(-1);
+  const start = indexOf(u.at, width);
+  best[start] = 0;
+
+  // Terrain costs 1 or 2, so a hex is never relaxed into a bucket already drained.
+  // That is what makes plain buckets exact here, and cheaper than re-sorting a frontier.
+  const buckets: number[][] = Array.from({ length: budget + 1 }, () => []);
+  buckets[0]!.push(start);
+
+  for (let c = 0; c <= budget; c++) {
+    const bucket = buckets[c]!;
+    for (let bi = 0; bi < bucket.length; bi++) {
+      const cur = bucket[bi]!;
+      if (best[cur]! < c) continue; // reached more cheaply after it was queued
+      const base = cur * 6;
+      for (let n = 0; n < 6; n++) {
+        const next = table[base + n]!;
+        if (next < 0) continue;
+        const occupant = blocked[next]!;
+        if (occupant === 1) continue;
+        const step = c + (terrain[next] === "plain" ? 1 : 2);
+        if (step > budget || best[next]! <= step) continue;
+        best[next] = step;
+        from[next] = cur;
+        buckets[step]!.push(next);
+      }
     }
   }
-  return { cost, from };
+
+  // Back to the "q,r" shape the rest of the game speaks, for the handful of hexes
+  // that are actually reachable rather than for every hex walked.
+  const cost = new Map<string, number>();
+  const fromMap = new Map<string, Hex>();
+  for (let i = 0; i < cells; i++) {
+    if (best[i] === UNREACHED || i === start) continue;
+    const h = hexAt(i, width);
+    const k = key(h);
+    fromMap.set(k, hexAt(from[i]!, width));
+    if (blocked[i] === -1) cost.set(k, best[i]!);
+  }
+  return { cost, from: fromMap };
 }
 
 /** Hexes this unit can end its move on, mapped to what the trip costs. */
 export function reachable(s: BattleState, u: BattleUnit): Map<string, number> {
-  return search(s, u).cost;
+  return movement(s, u).cost;
 }
 
 /**
@@ -84,20 +123,28 @@ export function reachable(s: BattleState, u: BattleUnit): Map<string, number> {
  * gap narrows the enemy's reach the moment it moves.
  */
 export function projectedReach(s: BattleState, u: BattleUnit): Map<string, number> {
-  return search(s, u, true).cost;
+  return movement(s, u, true).cost;
 }
 
-/** The route the unit would walk to `to`, first step first. Empty if it cannot get there. */
-export function pathTo(s: BattleState, u: BattleUnit, to: Hex): Hex[] {
-  const { cost, from } = search(s, u);
-  if (!cost.has(key(to))) return [];
+/** The route to `to` out of an already-computed walk. Empty if it cannot get there. */
+export function pathFrom(m: Movement, u: BattleUnit, to: Hex): Hex[] {
+  if (!m.cost.has(key(to))) return [];
   const out: Hex[] = [];
   let cur: Hex | undefined = to;
   while (cur && !same(cur, u.at)) {
     out.unshift(cur);
-    cur = from.get(key(cur));
+    cur = m.from.get(key(cur));
   }
   return out;
+}
+
+/**
+ * The route the unit would walk to `to`, first step first.
+ * Callers that also need the reachable set should walk the board once with
+ * `movement` and use `pathFrom`, rather than paying for a second walk here.
+ */
+export function pathTo(s: BattleState, u: BattleUnit, to: Hex): Hex[] {
+  return pathFrom(movement(s, u), u, to);
 }
 
 export function moveUnit(s: BattleState, u: BattleUnit, to: Hex): boolean {

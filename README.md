@@ -73,7 +73,12 @@ The engine deals in `player` and `enemy`. It does not contain the word "Dacia", 
 ```bash
 npm test        # node:test over rules, forecast, objectives, progression, save file
 npm run check   # typecheck both projects, then the tests
+npm run bench   # timings for the hot paths behind a mouse move
 ```
+
+`test/perf-parity.test.ts` keeps the pre-speedup pathfinder and hex picker as reference oracles. Anything that makes the board faster has to keep giving the same answers, and that suite is what says so.
+
+For drawing cost, which Node cannot measure, open the battle screen with `?perf=1` (for example http://localhost:3117/?perf=1). The strip under the board then reports median and p95 for the board repaint and the threat map.
 
 ## Dependencies
 
