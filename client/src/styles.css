@@ -155,6 +155,43 @@ p { line-height: 1.5; margin: 0.4rem 0; }
 }
 canvas { display: block; margin: 0 auto; cursor: pointer; border-radius: 6px; max-width: 100%; height: auto !important; }
 
+/* Board bar: the enemy-reach switch and the key to every colour the board uses. */
+.board-bar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.9rem;
+  margin-top: 0.55rem; padding: 0.5rem 0.6rem;
+  border-radius: 8px; border: 1px solid rgba(90,60,20,0.35);
+  background: rgba(255,250,235,0.55);
+}
+.legend { display: flex; flex-wrap: wrap; gap: 0.35rem 0.85rem; margin-left: auto; }
+.legend-item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.76rem; color: var(--muted); }
+
+.swatch {
+  width: 15px; height: 15px; flex: none; border-radius: 3px;
+  border: 1px solid rgba(60,40,10,0.45); background: #c9b878;
+}
+.sw-move { background: #e9d68d; }
+.sw-melee { background: #c9b878; border: 2px solid #ff5a3c; }
+.sw-ranged { background: #c9b878; border: 2px solid #ffa03c; }
+.sw-pila { background: #c9b878; border: 2px dashed #d8ae2a; }
+.sw-charge {
+  background:
+    repeating-linear-gradient(45deg, #8f1414 0 2px, rgba(0,0,0,0) 2px 5px),
+    #c9b878;
+}
+.sw-arrow {
+  background:
+    radial-gradient(circle at 3px 3px, #7a2c6a 1.4px, rgba(0,0,0,0) 1.6px) 0 0 / 6px 6px,
+    #c9b878;
+}
+
+/* Danger readout: who bears on the hex under the cursor. */
+.danger {
+  margin-top: 0.6rem; padding: 0.55rem 0.7rem; border-radius: 8px;
+  border: 1px solid rgba(90,60,20,0.35); background: rgba(122,44,106,0.1);
+}
+.danger h3 { margin-top: 0; }
+.danger-row { display: flex; align-items: center; gap: 0.45rem; font-size: 0.85rem; margin: 0.2rem 0; }
+
 .unit-card { margin-top: 0.6rem; padding: 0.7rem; border-radius: 8px; border: 1px solid rgba(90,60,20,0.3); background: rgba(255,250,235,0.6); }
 .unit-card.empty { color: var(--muted); font-style: italic; }
 .unit-card.rome { border-left: 4px solid var(--rome); }

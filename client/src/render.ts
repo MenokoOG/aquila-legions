@@ -2,6 +2,7 @@ import type { Hex, Terrain } from "../../shared/types.js";
 import { HEX_SIZE, boardPixelSize, corners, key, toPixel } from "./hex.js";
 import type { BattleState, BattleUnit } from "./engine/battle.js";
 import { terrainAt } from "./engine/battle.js";
+import { type ThreatMap, threatAt } from "./engine/threat.js";
 import type { Effects } from "./effects.js";
 
 /** Canvas renderer. Reads state, draws it, owns nothing. */
@@ -15,6 +16,8 @@ export interface Highlights {
   hover: Hex | null;
   /** The route the selected unit would walk to the hovered hex, first step first. */
   path: Hex[];
+  /** Where the Dacians could strike next turn. Null when the player has the layer off. */
+  threat: ThreatMap | null;
 }
 
 const TERRAIN_FILL: Record<Terrain, [string, string]> = {
@@ -78,6 +81,66 @@ function drawTerrainDetail(ctx: CanvasRenderingContext2D, t: Terrain, cx: number
       const rad = 4 + ((seed * 5 + i * 17) % 16);
       ctx.beginPath();
       ctx.ellipse(cx + Math.cos(a) * rad, cy + Math.sin(a) * rad, 3.5, 2.2, a, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+/**
+ * Two hatch tiles, built once and cached. Diagonal bars mean a charge can reach the
+ * hex; dots mean arrows can. They are patterns rather than a flat wash so the terrain
+ * underneath stays readable and the gold move overlay still reads on top.
+ */
+const TILE = 10;
+let chargeTile: CanvasPattern | null = null;
+let arrowTile: CanvasPattern | null = null;
+
+function pattern(ctx: CanvasRenderingContext2D, kind: "charge" | "arrow"): CanvasPattern | null {
+  const cached = kind === "charge" ? chargeTile : arrowTile;
+  if (cached) return cached;
+  const tile = document.createElement("canvas");
+  tile.width = TILE;
+  tile.height = TILE;
+  const c = tile.getContext("2d");
+  if (!c) return null;
+  if (kind === "charge") {
+    c.strokeStyle = "#8f1414";
+    c.lineWidth = 2.4;
+    c.beginPath();
+    c.moveTo(-TILE, TILE); c.lineTo(TILE, -TILE);
+    c.moveTo(0, TILE * 2); c.lineTo(TILE * 2, 0);
+    c.stroke();
+  } else {
+    c.fillStyle = "#7a2c6a";
+    c.beginPath(); c.arc(TILE / 2, TILE / 2, 1.7, 0, Math.PI * 2); c.fill();
+  }
+  const made = ctx.createPattern(tile, "repeat");
+  if (kind === "charge") chargeTile = made; else arrowTile = made;
+  return made;
+}
+
+/** Shades a hex the enemy can reach. More attackers bearing on it, heavier the shade. */
+function drawThreat(ctx: CanvasRenderingContext2D, hx: Hex, cx: number, cy: number, map: ThreatMap): void {
+  const cell = threatAt(map, hx);
+  if (!cell) return;
+  const weight = Math.min(3, cell.melee.length + cell.missile.length);
+  ctx.save();
+  if (cell.melee.length) {
+    const p = pattern(ctx, "charge");
+    if (p) {
+      ctx.globalAlpha = 0.2 + weight * 0.09;
+      hexPath(ctx, cx, cy, HEX_SIZE - 2);
+      ctx.fillStyle = p;
+      ctx.fill();
+    }
+  }
+  if (cell.missile.length) {
+    const p = pattern(ctx, "arrow");
+    if (p) {
+      ctx.globalAlpha = 0.55;
+      hexPath(ctx, cx, cy, HEX_SIZE - 2);
+      ctx.fillStyle = p;
       ctx.fill();
     }
   }
@@ -231,6 +294,7 @@ export function render(canvas: HTMLCanvasElement, s: BattleState, hl: Highlights
       ctx.lineWidth = 1.2;
       ctx.stroke();
       drawTerrainDetail(ctx, t, x, y, q * 31 + r * 17);
+      if (hl.threat) drawThreat(ctx, hx, x, y, hl.threat);
 
       const k = key(hx);
       if (hl.reachable.has(k)) {

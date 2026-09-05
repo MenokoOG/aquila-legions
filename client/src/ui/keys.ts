@@ -9,6 +9,7 @@ export interface KeyHandlers {
   attackMode: () => void;
   pilaMode: () => void;
   lesson: () => void;
+  threat: () => void;
 }
 
 function typing(target: EventTarget | null): boolean {
@@ -52,6 +53,7 @@ export function bindKeys(h: KeyHandlers): () => void {
       case "a": return handled(h.attackMode);
       case "p": return handled(h.pilaMode);
       case "l": return handled(h.lesson);
+      case "t": return handled(h.threat);
       default: return undefined;
     }
   };

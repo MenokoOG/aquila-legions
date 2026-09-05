@@ -42,12 +42,16 @@ interface Search {
   from: Map<string, Hex>;
 }
 
-/** Dijkstra over move points. Enemies block; friends can be crossed but not stopped on. */
-function search(s: BattleState, u: BattleUnit): Search {
+/**
+ * Dijkstra over move points. Enemies block; friends can be crossed but not stopped on.
+ * `fresh` ignores orders already spent this turn, which is how the threat overlay asks
+ * where a unit could go once its turn comes round again.
+ */
+function search(s: BattleState, u: BattleUnit, fresh = false): Search {
   const budget = effectiveMove(u);
   const cost = new Map<string, number>();
   const from = new Map<string, Hex>();
-  if (u.moved || u.acted || budget === 0) return { cost, from };
+  if ((!fresh && (u.moved || u.acted)) || budget === 0) return { cost, from };
   const best = new Map<string, number>([[key(u.at), 0]]);
   const frontier: { h: Hex; cost: number }[] = [{ h: u.at, cost: 0 }];
   const { width, height } = s.scenario;
@@ -73,6 +77,15 @@ function search(s: BattleState, u: BattleUnit): Search {
 /** Hexes this unit can end its move on, mapped to what the trip costs. */
 export function reachable(s: BattleState, u: BattleUnit): Map<string, number> {
   return search(s, u).cost;
+}
+
+/**
+ * Where the unit could stand on a fresh turn, whatever it has already done this one.
+ * The board it walks is the board as it stands now, so a Roman cohort stepping into a
+ * gap narrows the enemy's reach the moment it moves.
+ */
+export function projectedReach(s: BattleState, u: BattleUnit): Map<string, number> {
+  return search(s, u, true).cost;
 }
 
 /** The route the unit would walk to `to`, first step first. Empty if it cannot get there. */

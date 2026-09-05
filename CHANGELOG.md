@@ -4,6 +4,16 @@ All notable changes to this project are recorded here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Enemy reach overlay (`client/src/engine/threat.ts`). Every hex a Dacian unit could strike on its next turn is shaded on the board: red hatching where a charge can arrive, purple dots where their archers reach. It reports capability, not the AI's intent, so a player who plans against it is never ambushed by the AI changing its mind. Toggle with `T` or the button under the board.
+- Board bar under the map: the overlay switch, a running count of threatened hexes, and a key to every colour the board uses.
+- Danger readout in the unit panel. Hovering any hex names who bears on it — "Charged by 2 Dacian Warbands, Falxmen" — and falls back to the selected unit's own hex so the panel answers "am I exposed where I stand?" with nothing hovered.
+- `projectedReach` in `client/src/engine/rules.ts`: where a unit could stand on a fresh turn, whatever it has already spent this one. The threat map is built on it.
+- Six tests over the threat map, including the one that matters most: standing a cohort in a corridor shrinks the enemy's reach the moment it moves.
+
 ## [0.2.0] - 2026-09-04
 
 ### Added
