@@ -10,6 +10,17 @@ const ROUT_FRACTION = 0.25;
 const MELEE_SCALE = 3.0;
 const RETALIATION = 0.55;
 
+/** The luck band on every attack. Forecasts read these so the range they show is the real one. */
+export const ROLL_MIN = 0.85;
+export const ROLL_MAX = 1.15;
+
+let roll: () => number = () => ROLL_MIN + Math.random() * (ROLL_MAX - ROLL_MIN);
+
+/** Tests swap in a deterministic roll. The game never calls this. */
+export function setRoll(fn: () => number): void {
+  roll = fn;
+}
+
 export function moveCost(t: Terrain): number {
   return t === "plain" ? 1 : 2;
 }
@@ -26,11 +37,17 @@ export function effectiveMove(u: BattleUnit): number {
   return u.tmpl.move;
 }
 
+interface Search {
+  cost: Map<string, number>;
+  from: Map<string, Hex>;
+}
+
 /** Dijkstra over move points. Enemies block; friends can be crossed but not stopped on. */
-export function reachable(s: BattleState, u: BattleUnit): Map<string, number> {
+function search(s: BattleState, u: BattleUnit): Search {
   const budget = effectiveMove(u);
-  const out = new Map<string, number>();
-  if (u.moved || u.acted || budget === 0) return out;
+  const cost = new Map<string, number>();
+  const from = new Map<string, Hex>();
+  if (u.moved || u.acted || budget === 0) return { cost, from };
   const best = new Map<string, number>([[key(u.at), 0]]);
   const frontier: { h: Hex; cost: number }[] = [{ h: u.at, cost: 0 }];
   const { width, height } = s.scenario;
@@ -45,9 +62,28 @@ export function reachable(s: BattleState, u: BattleUnit): Map<string, number> {
       const k = key(n);
       if ((best.get(k) ?? Infinity) <= c) continue;
       best.set(k, c);
+      from.set(k, cur.h);
       frontier.push({ h: n, cost: c });
-      if (!occupant) out.set(k, c);
+      if (!occupant) cost.set(k, c);
     }
+  }
+  return { cost, from };
+}
+
+/** Hexes this unit can end its move on, mapped to what the trip costs. */
+export function reachable(s: BattleState, u: BattleUnit): Map<string, number> {
+  return search(s, u).cost;
+}
+
+/** The route the unit would walk to `to`, first step first. Empty if it cannot get there. */
+export function pathTo(s: BattleState, u: BattleUnit, to: Hex): Hex[] {
+  const { cost, from } = search(s, u);
+  if (!cost.has(key(to))) return [];
+  const out: Hex[] = [];
+  let cur: Hex | undefined = to;
+  while (cur && !same(cur, u.at)) {
+    out.unshift(cur);
+    cur = from.get(key(cur));
   }
   return out;
 }
@@ -104,10 +140,6 @@ export function setFormation(s: BattleState, u: BattleUnit, f: Formation): boole
   return true;
 }
 
-function rand(): number {
-  return 0.85 + Math.random() * 0.3;
-}
-
 function strength(u: BattleUnit): number {
   return 0.5 + 0.5 * (u.men / u.maxMen);
 }
@@ -131,14 +163,40 @@ function defenseValue(s: BattleState, a: BattleUnit, t: BattleUnit, missile: boo
   return d;
 }
 
-function applyDamage(s: BattleState, a: BattleUnit, t: BattleUnit, raw: number, missile: boolean): number {
+export type AttackKind = "melee" | "pila" | "shoot" | "retaliation";
+
+/** Attack power before the luck roll. Pure, so the forecast and the real blow share one formula. */
+export function attackPower(s: BattleState, a: BattleUnit, t: BattleUnit, kind: AttackKind): number {
+  const base = a.tmpl.attack * strength(a);
+  switch (kind) {
+    case "melee": return base * attackMultiplier(s, a, t, true) * MELEE_SCALE;
+    case "pila": return base * 1.6 * MELEE_SCALE;
+    case "shoot": return base * 2.4;
+    case "retaliation": return base * RETALIATION * MELEE_SCALE;
+  }
+}
+
+/** How many men a blow of `raw` power takes off `t`. Pure: nothing is changed. */
+export function damageToMen(
+  s: BattleState, a: BattleUnit, t: BattleUnit, raw: number, missile: boolean,
+): number {
   let dmg = raw;
   if (missile && t.formation === "testudo") dmg *= 0.25;
   const d = defenseValue(s, a, t, missile);
-  const men = Math.max(1, Math.round(dmg * (100 / (100 + d))));
+  return Math.min(t.men, Math.max(1, Math.round(dmg * (100 / (100 + d)))));
+}
+
+/** Whether losing `menLost` puts a unit at or under the rout threshold. */
+export function wouldRout(t: BattleUnit, menLost: number): boolean {
+  return t.men - menLost <= t.maxMen * ROUT_FRACTION;
+}
+
+function applyDamage(s: BattleState, a: BattleUnit, t: BattleUnit, raw: number, missile: boolean): number {
+  const men = damageToMen(s, a, t, raw, missile);
   t.men = Math.max(0, t.men - men);
   if (t.side === "rome") s.track.romanLosses += men; else s.track.dacianLosses += men;
   if (missile && t.side === "rome") s.track.missileLosses += men;
+  s.listener?.damage?.(t, men, missile);
   return men;
 }
 
@@ -146,6 +204,7 @@ function checkRout(s: BattleState, victim: BattleUnit, killer: BattleUnit, flank
   if (victim.men > victim.maxMen * ROUT_FRACTION) return;
   s.units = s.units.filter((u) => u.id !== victim.id);
   log(s, `${victim.label} breaks and routs.`, "system");
+  s.listener?.rout?.(victim);
   if (victim.side === "rome" && isLegionary(victim)) s.track.cohortsRouted += 1;
   if (victim.side === "dacia") {
     if (killer.formation === "cuneus") s.track.cuneusKills += 1;
@@ -157,8 +216,7 @@ function checkRout(s: BattleState, victim: BattleUnit, killer: BattleUnit, flank
 export function melee(s: BattleState, a: BattleUnit, t: BattleUnit): void {
   if (!meleeTargets(s, a).some((x) => x.id === t.id)) return;
   const flanked = isFlanked(s, t);
-  const raw = a.tmpl.attack * strength(a) * attackMultiplier(s, a, t, true) * MELEE_SCALE * rand();
-  const dealt = applyDamage(s, a, t, raw, false);
+  const dealt = applyDamage(s, a, t, attackPower(s, a, t, "melee") * roll(), false);
   a.acted = true;
   a.moved = true;
   if (a.side === "rome" && isLegionary(a)) {
@@ -169,17 +227,15 @@ export function melee(s: BattleState, a: BattleUnit, t: BattleUnit): void {
   log(s, `${a.label} charges ${t.label}${note}: ${dealt} fall.`);
   checkRout(s, t, a, flanked);
   if (t.men > 0 && s.units.includes(t)) {
-    const back = t.tmpl.attack * strength(t) * RETALIATION * MELEE_SCALE * rand();
-    const taken = applyDamage(s, t, a, back, false);
-    log(s, `${t.label} fights back: ${dealt > 0 ? taken : 0} fall.`);
+    const taken = applyDamage(s, t, a, attackPower(s, t, a, "retaliation") * roll(), false);
+    log(s, `${t.label} fights back: ${taken} fall.`);
     checkRout(s, a, t, false);
   }
 }
 
 export function throwPila(s: BattleState, a: BattleUnit, t: BattleUnit): void {
   if (!pilaTargets(s, a).some((x) => x.id === t.id)) return;
-  const raw = a.tmpl.attack * strength(a) * 1.6 * MELEE_SCALE * rand();
-  const dealt = applyDamage(s, a, t, raw, true);
+  const dealt = applyDamage(s, a, t, attackPower(s, a, t, "pila") * roll(), true);
   a.pila -= 1;
   a.acted = true;
   s.track.cohortsThrown.add(a.id);
@@ -189,16 +245,17 @@ export function throwPila(s: BattleState, a: BattleUnit, t: BattleUnit): void {
 
 export function shoot(s: BattleState, a: BattleUnit, t: BattleUnit): void {
   if (!rangedTargets(s, a).some((x) => x.id === t.id)) return;
-  const raw = a.tmpl.attack * strength(a) * 2.4 * rand();
-  const dealt = applyDamage(s, a, t, raw, true);
+  const dealt = applyDamage(s, a, t, attackPower(s, a, t, "shoot") * roll(), true);
   a.acted = true;
   const verb = a.kind === "scorpio" ? "looses bolts at" : "shoots";
   log(s, `${a.label} ${verb} ${t.label}: ${dealt} fall${t.formation === "testudo" ? " (testudo holds)" : ""}.`);
   checkRout(s, t, a, isFlanked(s, t));
 }
 
-function underMissileThreat(s: BattleState, u: BattleUnit): boolean {
-  return unitsOf(s, "dacia").some((e) => e.tmpl.range > 0 && distance(e.at, u.at) <= e.tmpl.range);
+/** True when an enemy missile unit can reach this hex right now. */
+export function underMissileThreat(s: BattleState, u: BattleUnit): boolean {
+  const foe = u.side === "rome" ? "dacia" : "rome";
+  return unitsOf(s, foe).some((e) => e.tmpl.range > 0 && distance(e.at, u.at) <= e.tmpl.range);
 }
 
 /** Tally the formation-discipline objectives at the end of each Roman turn. */

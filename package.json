@@ -1,6 +1,6 @@
 {
   "name": "aquila-legions",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Aquila: Legions of Trajan. A local hex-tactics game that teaches Roman legion tactics and history.",
   "type": "module",
@@ -8,7 +8,9 @@
     "dev": "concurrently -k -n server,client -c red,yellow \"tsx watch server/index.ts\" \"vite --config client/vite.config.ts\"",
     "build": "vite build --config client/vite.config.ts",
     "start": "npm run build && tsx server/index.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p client/tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p client/tsconfig.json --noEmit",
+    "test": "node --import tsx --test \"test/**/*.test.ts\"",
+    "check": "npm run typecheck && npm test"
   },
   "dependencies": {
     "express": "^4.21.2"

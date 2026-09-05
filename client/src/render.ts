@@ -2,6 +2,7 @@ import type { Hex, Terrain } from "../../shared/types.js";
 import { HEX_SIZE, boardPixelSize, corners, key, toPixel } from "./hex.js";
 import type { BattleState, BattleUnit } from "./engine/battle.js";
 import { terrainAt } from "./engine/battle.js";
+import type { Effects } from "./effects.js";
 
 /** Canvas renderer. Reads state, draws it, owns nothing. */
 
@@ -12,6 +13,8 @@ export interface Highlights {
   ranged: Set<string>;
   pila: Set<string>;
   hover: Hex | null;
+  /** The route the selected unit would walk to the hovered hex, first step first. */
+  path: Hex[];
 }
 
 const TERRAIN_FILL: Record<Terrain, [string, string]> = {
@@ -27,6 +30,10 @@ const GLYPH: Record<string, string> = {
 };
 
 const FORM_BADGE: Record<string, string> = { line: "", testudo: "T", cuneus: "W", orbis: "O" };
+
+const FLOAT_COLOR: Record<string, string> = {
+  hit: "#ffd9a0", friendly: "#ff9a86", rout: "#fff3b0",
+};
 
 export function sizeCanvas(canvas: HTMLCanvasElement, width: number, height: number): void {
   const { w, h } = boardPixelSize(width, height);
@@ -138,8 +145,12 @@ function drawUnit(ctx: CanvasRenderingContext2D, u: BattleUnit, cx: number, cy: 
   ctx.fillStyle = frac > 0.5 ? "#7ccf6a" : frac > 0.3 ? "#e6c04a" : "#e0563b";
   ctx.fillRect(cx - barW / 2, cy + h / 2 + 2, barW * frac, 5);
 
-  if (u.acted || (u.moved && u.side === "rome")) {
-    ctx.fillStyle = "rgba(0,0,0,0.35)";
+  // Two shades of spent: dark once the unit has attacked and is finished, lighter
+  // when it has only moved and could still fight. The eye can then find whoever is
+  // still waiting on orders.
+  const veil = u.acted ? 0.45 : u.moved ? 0.2 : 0;
+  if (veil > 0) {
+    ctx.fillStyle = `rgba(0,0,0,${veil})`;
     ctx.beginPath(); ctx.ellipse(cx, cy, w / 2 + 1, h / 2 + 1, 0, 0, Math.PI * 2); ctx.fill();
   }
   ctx.restore();
@@ -155,7 +166,49 @@ function ring(ctx: CanvasRenderingContext2D, cx: number, cy: number, color: stri
   ctx.restore();
 }
 
-export function render(canvas: HTMLCanvasElement, s: BattleState, hl: Highlights): void {
+/** The dotted route to the hovered hex, with the destination marked. */
+function drawPath(ctx: CanvasRenderingContext2D, from: Hex, path: Hex[]): void {
+  if (!path.length) return;
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,243,176,0.9)";
+  ctx.lineWidth = 3;
+  ctx.setLineDash([5, 6]);
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  const start = toPixel(from);
+  ctx.moveTo(start.x, start.y);
+  for (const step of path) {
+    const p = toPixel(step);
+    ctx.lineTo(p.x, p.y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  const end = toPixel(path[path.length - 1]!);
+  ctx.fillStyle = "rgba(255,243,176,0.9)";
+  ctx.beginPath(); ctx.arc(end.x, end.y, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+function drawFloaters(ctx: CanvasRenderingContext2D, fx: Effects): void {
+  ctx.save();
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "bold 17px 'Cinzel', Georgia, serif";
+  for (const { f, age } of fx.alive()) {
+    const { x, y } = toPixel(f.at);
+    const rise = 6 + age * 30;
+    ctx.globalAlpha = age < 0.7 ? 1 : 1 - (age - 0.7) / 0.3;
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "rgba(20,12,4,0.85)";
+    ctx.strokeText(f.text, x, y - 26 - rise);
+    ctx.fillStyle = FLOAT_COLOR[f.tone] ?? "#fff";
+    ctx.fillText(f.text, x, y - 26 - rise);
+  }
+  ctx.restore();
+}
+
+export function render(canvas: HTMLCanvasElement, s: BattleState, hl: Highlights, fx?: Effects): void {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
   const { width, height } = s.scenario;
@@ -194,6 +247,8 @@ export function render(canvas: HTMLCanvasElement, s: BattleState, hl: Highlights
     }
   }
 
+  if (hl.selected) drawPath(ctx, hl.selected.at, hl.path);
+
   for (const u of s.units) {
     const { x, y } = toPixel(u.at);
     const k = key(u.at);
@@ -202,4 +257,6 @@ export function render(canvas: HTMLCanvasElement, s: BattleState, hl: Highlights
     if (hl.pila.has(k)) ring(ctx, x, y, "#ffe45c", true);
     drawUnit(ctx, u, x, y, hl.selected?.id === u.id);
   }
+
+  if (fx) drawFloaters(ctx, fx);
 }

@@ -41,6 +41,12 @@ export interface LogLine {
   text: string;
 }
 
+/** How the view learns about blows landed, without the rules knowing a canvas exists. */
+export interface BattleListener {
+  damage?: (target: BattleUnit, men: number, missile: boolean) => void;
+  rout?: (victim: BattleUnit) => void;
+}
+
 export interface BattleState {
   scenario: Scenario;
   units: BattleUnit[];
@@ -49,6 +55,27 @@ export interface BattleState {
   log: LogLine[];
   track: Trackers;
   over: { won: boolean; reason: string } | null;
+  listener?: BattleListener;
+}
+
+/**
+ * A detached copy of the fight, for undo. The scenario is shared (it never changes)
+ * and the listener is dropped so a restored state cannot fire stale effects.
+ */
+export function cloneBattle(s: BattleState): BattleState {
+  return {
+    scenario: s.scenario,
+    units: s.units.map((u) => ({ ...u, at: { ...u.at } })),
+    turn: s.turn,
+    active: s.active,
+    log: s.log.map((l) => ({ ...l })),
+    track: {
+      ...s.track,
+      cohortsInMelee: new Set(s.track.cohortsInMelee),
+      cohortsThrown: new Set(s.track.cohortsThrown),
+    },
+    over: s.over ? { ...s.over } : null,
+  };
 }
 
 export function isLegionary(u: BattleUnit): boolean {
