@@ -46,6 +46,43 @@ export function neighbors(h: Hex, width: number, height: number): Hex[] {
   return out;
 }
 
+/** A hex's slot in a width-by-height board, for array-indexed work. */
+export function indexOf(h: Hex, width: number): number {
+  return h.r * width + h.q;
+}
+
+export function hexAt(index: number, width: number): Hex {
+  return { q: index % width, r: Math.floor(index / width) };
+}
+
+/**
+ * Neighbour lists for a whole board, flattened and cached.
+ *
+ * `neighbors` allocates an array and runs two cube conversions every call, which is
+ * fine once and wasteful inside a pathfinder that asks for the same six hexes over
+ * and over. A board's shape never changes mid-battle, so the answer is computed once
+ * per board size and read as integers after that. Slot `i * 6 + n` holds the nth
+ * neighbour of hex `i`, or -1 where the board runs out.
+ */
+const NEIGHBOUR_CACHE = new Map<string, Int32Array>();
+
+export function neighborTable(width: number, height: number): Int32Array {
+  const cacheKey = `${width}x${height}`;
+  const cached = NEIGHBOUR_CACHE.get(cacheKey);
+  if (cached) return cached;
+
+  const table = new Int32Array(width * height * 6).fill(-1);
+  for (let r = 0; r < height; r++) {
+    for (let q = 0; q < width; q++) {
+      const i = r * width + q;
+      const ns = neighbors({ q, r }, width, height);
+      for (let n = 0; n < ns.length; n++) table[i * 6 + n] = ns[n]!.r * width + ns[n]!.q;
+    }
+  }
+  NEIGHBOUR_CACHE.set(cacheKey, table);
+  return table;
+}
+
 export function toPixel(h: Hex, size = HEX_SIZE): { x: number; y: number } {
   const x = size * SQRT3 * (h.q + 0.5 * (h.r & 1)) + size;
   const y = size * 1.5 * h.r + size;

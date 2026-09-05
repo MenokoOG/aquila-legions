@@ -5,8 +5,8 @@ import {
   type BattleState, type BattleUnit, cloneBattle, createBattle, toStats, unitAt,
 } from "../engine/battle.js";
 import {
-  checkOver, endTurn, melee, meleeTargets, moveUnit, pathTo, pilaTargets, rangedTargets,
-  reachable, setFormation, shoot, throwPila,
+  checkOver, endTurn, melee, meleeTargets, movement, moveUnit, pathFrom, pilaTargets,
+  rangedTargets, setFormation, shoot, throwPila,
 } from "../engine/rules.js";
 import { type Forecast, forecast } from "../engine/forecast.js";
 import { type ThreatMap, threatAt, threatMap } from "../engine/threat.js";
@@ -17,6 +17,7 @@ import { type ActionMode, type DangerView, renderLeftPanel, renderLog, updateIns
 import { renderBoardBar } from "./boardBar.js";
 import { bindKeys } from "./keys.js";
 import { el, sleep } from "./dom.js";
+import { measure, perfReport } from "../perf.js";
 import { showModal } from "./modal.js";
 
 /** One battle from deployment to result. Owns the canvas events and the turn loop. */
@@ -113,13 +114,17 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
       pila: new Set(), hover: hoverHex, path: [], threat: showThreat ? threat : null,
     };
     if (sel && ours(sel)) {
-      for (const k of reachable(s, sel).keys()) hl.reachable.add(k);
+      // One walk of the board answers both "where can it go" and "how would it get
+      // there". Asking for the reachable set and then the route used to walk it twice,
+      // on every mouse move.
+      const walk = movement(s, sel);
+      for (const k of walk.cost.keys()) hl.reachable.add(k);
       if (mode === "pila") for (const t of pilaTargets(s, sel)) hl.pila.add(key(t.at));
       else {
         for (const t of meleeTargets(s, sel)) hl.melee.add(key(t.at));
         for (const t of rangedTargets(s, sel)) hl.ranged.add(key(t.at));
       }
-      if (hoverHex && hl.reachable.has(key(hoverHex))) hl.path = pathTo(s, sel, hoverHex);
+      if (hoverHex && hl.reachable.has(key(hoverHex))) hl.path = pathFrom(walk, sel, hoverHex);
     }
     return hl;
   }
@@ -157,7 +162,7 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
   }
 
   function drawBoard(): void {
-    render(canvas, s, highlights(), fx);
+    measure("board", () => render(canvas, s, highlights(), fx));
   }
 
   /** Hover only touches the board and the inspector card, never the whole sidebar. */
@@ -168,8 +173,8 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
 
   /** Every order can open or close a lane, so the enemy's reach is re-read after each one. */
   function refreshThreat(): void {
-    threat = threatMap(s, "enemy");
-    renderBoardBar(bar, { showThreat, threatened: threat.size }, () => toggleThreat());
+    threat = measure("threat", () => threatMap(s, "enemy"));
+    renderBoardBar(bar, { showThreat, threatened: threat.size, perf: perfReport() }, () => toggleThreat());
   }
 
   function toggleThreat(): void {

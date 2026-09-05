@@ -1,5 +1,5 @@
 import type { Hex, Side } from "../../../shared/types.js";
-import { distance, key, neighbors } from "../hex.js";
+import { hexAt, indexOf, key, neighborTable } from "../hex.js";
 import type { BattleState, BattleUnit } from "./battle.js";
 import { projectedReach } from "./rules.js";
 
@@ -34,11 +34,12 @@ function cell(map: ThreatMap, k: string): ThreatCell {
  * Every hex the unit could be standing on when it acts: wherever it can walk, plus
  * the hex it already holds, because standing still is always a legal order.
  */
-function firingPositions(s: BattleState, u: BattleUnit): Hex[] {
-  const out: Hex[] = [{ ...u.at }];
+function firingPositions(s: BattleState, u: BattleUnit): number[] {
+  const width = s.scenario.width;
+  const out: number[] = [indexOf(u.at, width)];
   for (const k of projectedReach(s, u).keys()) {
     const [q, r] = k.split(",").map(Number) as [number, number];
-    out.push({ q, r });
+    out.push(r * width + q);
   }
   return out;
 }
@@ -47,30 +48,52 @@ function firingPositions(s: BattleState, u: BattleUnit): Hex[] {
  * Threatened hexes for one unit. Melee units threaten what they can stand next to;
  * missile units threaten everything inside their range from anywhere they can stand,
  * because moving does not spend the shot.
+ *
+ * Both are a sweep outward from the firing positions rather than a test of every hex
+ * on the board against every position. `marked` carries over between units as a
+ * stamp, so no hex is ever credited to the same unit twice.
  */
-function markUnit(s: BattleState, u: BattleUnit, map: ThreatMap): void {
+function markUnit(s: BattleState, u: BattleUnit, map: ThreatMap, marked: Int32Array, stamp: number): void {
   const { width, height } = s.scenario;
+  const table = neighborTable(width, height);
   const spots = firingPositions(s, u);
 
   if (u.tmpl.range > 0) {
-    for (let r = 0; r < height; r++) {
-      for (let q = 0; q < width; q++) {
-        const hx = { q, r };
-        if (spots.some((p) => distance(p, hx) <= u.tmpl.range)) cell(map, key(hx)).missile.push(u);
+    // Multi-source sweep to `range` steps. One step of the neighbour table is one
+    // hex of distance, so this reaches exactly the hexes within range of some spot.
+    let frontier = spots.slice();
+    for (const i of frontier) marked[i] = stamp;
+    const reached = frontier.slice();
+    for (let step = 0; step < u.tmpl.range; step++) {
+      const next: number[] = [];
+      for (const cur of frontier) {
+        const base = cur * 6;
+        for (let n = 0; n < 6; n++) {
+          const nb = table[base + n]!;
+          if (nb < 0 || marked[nb] === stamp) continue;
+          marked[nb] = stamp;
+          next.push(nb);
+          reached.push(nb);
+        }
       }
+      if (!next.length) break;
+      frontier = next;
     }
+    for (const i of reached) cell(map, key(hexAt(i, width))).missile.push(u);
     return;
   }
 
-  const seen = new Set<string>();
-  for (const p of spots) {
-    for (const n of neighbors(p, width, height)) {
-      const k = key(n);
-      if (seen.has(k)) continue;
-      seen.add(k);
-      cell(map, k).melee.push(u);
+  const touched: number[] = [];
+  for (const spot of spots) {
+    const base = spot * 6;
+    for (let n = 0; n < 6; n++) {
+      const nb = table[base + n]!;
+      if (nb < 0 || marked[nb] === stamp) continue;
+      marked[nb] = stamp;
+      touched.push(nb);
     }
   }
+  for (const i of touched) cell(map, key(hexAt(i, width))).melee.push(u);
 }
 
 /**
@@ -80,9 +103,12 @@ function markUnit(s: BattleState, u: BattleUnit, map: ThreatMap): void {
 export function threatMap(s: BattleState, side: Side): ThreatMap {
   const map: ThreatMap = new Map();
   if (s.over) return map;
+  const marked = new Int32Array(s.scenario.width * s.scenario.height);
+  let stamp = 0;
   for (const u of s.units) {
     if (u.side !== side) continue;
-    markUnit(s, u, map);
+    stamp += 1;
+    markUnit(s, u, map, marked, stamp);
   }
   return map;
 }
