@@ -21,11 +21,21 @@ export interface HudHandlers {
   onLesson: () => void;
 }
 
+/** Who bears on the hex the player is looking at, ready to be read out in a sentence. */
+export interface DangerView {
+  /** Names the hex: "This hex" when hovering empty ground, the unit's label otherwise. */
+  subject: string;
+  melee: string[];
+  missile: string[];
+}
+
 export interface HudView {
   selected: BattleUnit | null;
   hover: BattleUnit | null;
   /** What the selected unit would do to the hovered enemy, if anything. */
   forecast: Forecast | null;
+  /** What the enemy could do to the hex under the cursor. Null when the layer is off. */
+  danger: DangerView | null;
   mode: ActionMode;
   busy: boolean;
   canUndo: boolean;
@@ -64,7 +74,7 @@ export function renderLeftPanel(root: HTMLElement, s: BattleState, v: HudView, h
         button("Restart", h.onRestart, "btn quiet"),
         button("Withdraw", h.onRetreat, "btn quiet"),
       ),
-      el("div", { class: "muted small keys", text: "Tab next unit · 1-4 formation · P pila · Esc deselect" }),
+      el("div", { class: "muted small keys", text: "Tab next unit · 1-4 formation · P pila · T enemy reach · Esc deselect" }),
     ),
   );
 
@@ -88,6 +98,32 @@ export function updateInspector(root: HTMLElement, s: BattleState, v: HudView): 
   const shown = v.selected ?? v.hover;
   slot.append(renderUnitCard(shown, s, shown !== null && shown === v.selected));
   if (v.forecast) slot.append(renderForecast(v.forecast));
+  const danger = v.danger ? renderDanger(v.danger) : null;
+  if (danger) slot.append(danger);
+}
+
+/** Counts one kind of attacker into plain English: "2 Dacian Warbands, Falxmen". */
+function nameList(labels: string[]): string {
+  const counts = new Map<string, number>();
+  for (const l of labels) counts.set(l, (counts.get(l) ?? 0) + 1);
+  return [...counts].map(([l, n]) => (n > 1 ? `${n} ${l}` : l)).join(", ");
+}
+
+function renderDanger(d: DangerView): HTMLElement | null {
+  if (!d.melee.length && !d.missile.length) return null;
+  return el("div", { class: "danger" },
+    el("h3", { text: `${d.subject} — under threat` }),
+    d.melee.length
+      ? el("div", { class: "danger-row" },
+        el("span", { class: "swatch sw-charge" }),
+        el("span", { text: `Charged by ${nameList(d.melee)}` }))
+      : null,
+    d.missile.length
+      ? el("div", { class: "danger-row" },
+        el("span", { class: "swatch sw-arrow" }),
+        el("span", { text: `Shot at by ${nameList(d.missile)}` }))
+      : null,
+  );
 }
 
 function renderObjectives(s: BattleState): HTMLElement {

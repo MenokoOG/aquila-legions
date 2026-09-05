@@ -8,10 +8,12 @@ import {
   reachable, setFormation, shoot, throwPila,
 } from "../engine/rules.js";
 import { type Forecast, forecast } from "../engine/forecast.js";
+import { type ThreatMap, threatAt, threatMap } from "../engine/threat.js";
 import { dacianTurn } from "../engine/ai.js";
 import { Effects } from "../effects.js";
 import { type Highlights, render, sizeCanvas } from "../render.js";
-import { type ActionMode, renderLeftPanel, renderLog, updateInspector } from "./hud.js";
+import { type ActionMode, type DangerView, renderLeftPanel, renderLog, updateInspector } from "./hud.js";
+import { renderBoardBar } from "./boardBar.js";
 import { bindKeys } from "./keys.js";
 import { el, sleep } from "./dom.js";
 import { showModal } from "./modal.js";
@@ -38,11 +40,16 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
   let busy = false;
   let finished = false;
   let animating = false;
+  // On by default: reading the enemy's reach is the skill the board is here to teach.
+  let showThreat = true;
+  // Recomputed once per order and reused while the cursor moves, so hovering stays cheap.
+  let threat: ThreatMap = new Map();
   const fx = new Effects();
 
   const left = el("aside", { class: "panel left" });
   const canvas = el("canvas", { class: "board" });
-  const boardWrap = el("div", { class: "board-wrap" }, canvas);
+  const bar = el("div", { class: "board-bar" });
+  const boardWrap = el("div", { class: "board-wrap" }, canvas, bar);
   const right = el("aside", { class: "panel right" });
   root.append(el("section", { class: "battle" }, left, boardWrap, right));
   sizeCanvas(canvas, scenario.width, scenario.height);
@@ -102,7 +109,7 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
     const sel = selected();
     const hl: Highlights = {
       selected: sel, reachable: new Set(), melee: new Set(), ranged: new Set(),
-      pila: new Set(), hover: hoverHex, path: [],
+      pila: new Set(), hover: hoverHex, path: [], threat: showThreat ? threat : null,
     };
     if (sel && ours(sel)) {
       for (const k of reachable(s, sel).keys()) hl.reachable.add(k);
@@ -116,12 +123,32 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
     return hl;
   }
 
+  /**
+   * Who bears on the hex under the cursor. Falls back to the selected unit's own hex
+   * so the panel keeps answering "am I exposed where I stand?" with nothing hovered.
+   */
+  function danger(): DangerView | null {
+    if (!showThreat) return null;
+    const sel = selected();
+    const hex = hoverHex ?? sel?.at ?? null;
+    if (!hex) return null;
+    const cell = threatAt(threat, hex);
+    if (!cell) return null;
+    const here = unitAt(s, hex);
+    return {
+      subject: here ? here.label : "This hex",
+      melee: cell.melee.map((u) => u.tmpl.name),
+      missile: cell.missile.map((u) => u.tmpl.name),
+    };
+  }
+
   function view() {
     const sel = selected();
     return {
       selected: sel,
       hover: hoverHex ? unitAt(s, hoverHex) ?? null : null,
       forecast: hoverForecast(),
+      danger: danger(),
       mode,
       busy,
       canUndo: history.length > 0,
@@ -138,8 +165,20 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
     updateInspector(left, s, view());
   }
 
+  /** Every order can open or close a lane, so the enemy's reach is re-read after each one. */
+  function refreshThreat(): void {
+    threat = threatMap(s, "dacia");
+    renderBoardBar(bar, { showThreat, threatened: threat.size }, () => toggleThreat());
+  }
+
+  function toggleThreat(): void {
+    showThreat = !showThreat;
+    drawAll();
+  }
+
   function drawAll(): void {
     if (selectedId && !s.units.some((u) => u.id === selectedId)) selectedId = null;
+    refreshThreat();
     drawBoard();
     renderLeftPanel(left, s, view(), {
       onFormation: (f: Formation) => applyFormation(f),
@@ -247,6 +286,7 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
       if (ours(sel) && pilaTargets(s, sel!).length > 0) { mode = "pila"; drawAll(); }
     },
     lesson: () => showLesson(),
+    threat: () => toggleThreat(),
   });
 
   async function runDacianTurn(): Promise<void> {
@@ -316,8 +356,10 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
       el("div", { class: "lesson-box" }, el("h3", { text: `Lesson: ${scenario.tactic}` }), el("p", { text: scenario.lesson })),
       el("h3", { text: "Objectives" }),
       ...scenario.objectives.map((o) => el("div", { class: "objective" }, el("span", { class: "pts", text: `+${o.points}` }), o.text)),
+      el("h3", { text: "Reading the board" }),
+      el("p", { class: "muted small", text: "Red hatching marks every hex a Dacian unit could charge next turn; purple dots mark what their archers can reach. Press T to hide or show it." }),
       el("h3", { text: "Keys" }),
-      el("p", { class: "muted small", text: "Enter end turn · Tab next unit · 1-4 formation · A gladius · P pila · U undo · Esc deselect · L this briefing" }),
+      el("p", { class: "muted small", text: "Enter end turn · Tab next unit · 1-4 formation · A gladius · P pila · T enemy reach · U undo · Esc deselect · L this briefing" }),
     ), [{ label: "To the field", onClick: () => drawAll(), primary: true }]);
   }
 
