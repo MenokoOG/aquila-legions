@@ -1,17 +1,27 @@
 import { api } from "./api.js";
 import type { BattleState } from "./engine/battle.js";
 import { toStats } from "./engine/battle.js";
+import { allProgress } from "./engine/objectives.js";
 import { SCENARIO_BY_ID } from "../../shared/data/scenarios.js";
 import { button, clear, el } from "./ui/dom.js";
 import { showModal } from "./ui/modal.js";
 import { renderMenu } from "./ui/menu.js";
 import { renderCodex } from "./ui/codex.js";
-import { mountBattle } from "./ui/battleScreen.js";
+import { type Dispose, mountBattle } from "./ui/battleScreen.js";
 
 /** Screen router. Menu, battle, codex. Nothing else lives here. */
 
 const screen = document.getElementById("screen")!;
 const nav = document.getElementById("nav")!;
+
+/** Whatever the current screen needs torn down before the next one is built. */
+let dispose: Dispose | null = null;
+
+function swap(): void {
+  dispose?.();
+  dispose = null;
+  clear(screen);
+}
 
 function setNav(...nodes: HTMLElement[]): void {
   clear(nav);
@@ -19,7 +29,7 @@ function setNav(...nodes: HTMLElement[]): void {
 }
 
 function fail(err: unknown): void {
-  clear(screen);
+  swap();
   screen.append(el("section", { class: "panel" },
     el("h2", { text: "The courier did not arrive" }),
     el("p", { text: `Could not reach the local server: ${(err as Error).message}` }),
@@ -31,7 +41,7 @@ function fail(err: unknown): void {
 async function showMenu(): Promise<void> {
   try {
     const data = await api.state();
-    clear(screen);
+    swap();
     setNav(
       el("span", { class: "pill", text: `${data.save.rank}` }),
       el("span", { class: "pill", text: `${data.save.historyPoints} pts` }),
@@ -50,7 +60,7 @@ async function showMenu(): Promise<void> {
 async function showCodex(): Promise<void> {
   try {
     const entries = await api.codex();
-    clear(screen);
+    swap();
     setNav(button("Campaign", () => void showMenu(), "btn quiet"));
     screen.append(renderCodex(entries, () => void showMenu()));
     window.scrollTo(0, 0);
@@ -63,9 +73,9 @@ async function startBattle(id: string): Promise<void> {
   try {
     const scenario = (await api.scenario(id).catch(() => SCENARIO_BY_ID[id])) ?? SCENARIO_BY_ID[id];
     if (!scenario) throw new Error("scenario not found");
-    clear(screen);
+    swap();
     setNav(el("span", { class: "pill", text: scenario.title }));
-    mountBattle(screen, scenario, {
+    dispose = mountBattle(screen, scenario, {
       onFinished: (state) => void submit(state),
       onWithdraw: () => void showMenu(),
     });
@@ -78,16 +88,22 @@ async function startBattle(id: string): Promise<void> {
 async function submit(state: BattleState): Promise<void> {
   const stats = toStats(state);
   const sc = state.scenario;
+  const progress = allProgress(state);
   try {
     const out = await api.result(sc.id, stats);
-    const rows = sc.objectives.map((o) => {
-      const met = out.objectivesMet.includes(o.kind);
+
+    // After-action review: for anything missed, say in one line what would have met it.
+    const rows = progress.map((p) => {
+      const met = out.objectivesMet.includes(p.objective.kind);
       return el("div", { class: `result-row ${met ? "met" : "missed"}` },
         el("span", { class: "mark-x", text: met ? "✓" : "·" }),
-        el("span", { text: o.text }),
-        el("span", { class: "muted", text: ` +${o.points}` }),
+        el("div", { class: "result-body" },
+          el("div", {}, p.objective.text, el("span", { class: "muted", text: ` +${p.objective.points}` })),
+          met ? null : el("div", { class: "muted small", text: p.hint }),
+        ),
       );
     });
+
     const body = el("div", {},
       el("p", { class: "muted", text: state.over?.reason ?? "" }),
       el("p", { text: `${stats.turns} turns · Roman losses ${stats.romanLosses} · Dacian losses ${stats.dacianLosses}` }),

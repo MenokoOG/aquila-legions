@@ -122,8 +122,30 @@ p { line-height: 1.5; margin: 0.4rem 0; }
 .panel-head h2 { margin: 0; font-size: 1.2rem; }
 .turn-row { display: flex; gap: 0.8rem; flex-wrap: wrap; margin: 0.6rem 0; }
 .turn-row .stat { min-width: 70px; font-size: 0.95rem; }
-.objective { display: flex; gap: 0.5rem; align-items: baseline; font-size: 0.92rem; margin: 0.15rem 0; }
+.objective { display: flex; gap: 0.5rem; align-items: baseline; font-size: 0.92rem; margin: 0.2rem 0; }
 .objective .pts { font-family: "Cinzel", serif; font-size: 0.7rem; color: var(--gold); min-width: 34px; }
+.objective .mark-x { font-family: "Cinzel", serif; min-width: 0.9rem; color: var(--muted); }
+.objective .obj-text { flex: 1; }
+.objective .obj-detail { font-size: 0.76rem; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.objective.done { color: var(--ok); }
+.objective.done .mark-x { color: var(--ok); }
+.objective.failed { color: var(--rome); opacity: 0.75; }
+.objective.failed .mark-x { color: var(--rome); }
+.objective.failed .obj-text { text-decoration: line-through; }
+
+/* Combat forecast */
+.forecast {
+  margin-top: 0.6rem; padding: 0.55rem 0.7rem; border-radius: 8px;
+  border: 1px solid rgba(90,60,20,0.35); background: rgba(201,162,39,0.14);
+}
+.forecast.risky { border-color: var(--rome); background: rgba(155,28,28,0.1); }
+.forecast h3 { margin-top: 0; }
+.fc-row { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem; }
+.fc-row .label { display: inline; }
+.fc-num { font-family: "Cinzel", serif; font-weight: 700; font-variant-numeric: tabular-nums; }
+.fc-note { font-size: 0.85rem; font-style: italic; margin-top: 0.2rem; }
+.fc-note.warn, .warn { color: var(--rome); }
+.warn { font-size: 0.85rem; margin-top: 0.25rem; }
 
 .board-wrap {
   background: linear-gradient(180deg, #d8c79a, #bba57a);
@@ -147,7 +169,10 @@ canvas { display: block; margin: 0 auto; cursor: pointer; border-radius: 6px; ma
 .orders { margin-top: 0.6rem; }
 .order-group { margin-top: 0.4rem; }
 .form-row { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.form-row.spread { margin-top: 0.4rem; }
+.form-row.spread .btn { flex: 1; }
 .end-row { margin-top: 0.8rem; }
+.end-row .keys { margin-top: 0.45rem; font-size: 0.74rem; line-height: 1.4; }
 
 .log-list { max-height: 560px; overflow-y: auto; font-size: 0.88rem; }
 .log-line { padding: 0.25rem 0.3rem; border-bottom: 1px dashed rgba(90,60,20,0.2); }
@@ -190,6 +215,8 @@ canvas { display: block; margin: 0 auto; cursor: pointer; border-radius: 6px; ma
 .result-row.met { color: var(--ok); }
 .result-row.missed { color: var(--muted); }
 .result-row .mark-x { font-family: "Cinzel", serif; min-width: 1.4rem; }
+.result-row .result-body { flex: 1; }
+.result-row.missed .result-body .small { margin-top: 0.1rem; }
 .points-big { font-family: "Cinzel", serif; font-size: 2rem; color: var(--gold); text-align: center; margin: 0.6rem 0; }
 .new-codex { margin-top: 0.8rem; padding: 0.7rem; border-left: 4px solid var(--gold); background: rgba(201,162,39,0.12); }
 .lesson-box { padding: 0.7rem; border-left: 4px solid var(--rome); background: rgba(155,28,28,0.07); margin: 0.6rem 0; }
