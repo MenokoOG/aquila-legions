@@ -58,13 +58,15 @@ export function renderLeftPanel(root: HTMLElement, s: BattleState, v: HudView, h
       el("div", { class: "stat" }, el("span", { class: "label", text: "Side" }), faction(s, s.active).name),
       el("div", { class: "stat" }, el("span", { class: "label", text: "Teaches" }), sc.tactic),
     ),
-    renderObjectives(s),
-    button("Read the lesson", h.onLesson, "btn quiet wide"),
     inspector,
   );
 
   const orders = v.selected && s.active === "player" && !v.busy ? renderOrders(s, v, h) : null;
   if (orders) root.append(orders);
+
+  // The forecast sits below the orders, not above them: you pick the formation and
+  // the weapon first, and the numbers answer the choice you just made.
+  root.append(el("div", { class: "forecast-slot" }));
 
   root.append(
     el("div", { class: "end-row" },
@@ -76,6 +78,7 @@ export function renderLeftPanel(root: HTMLElement, s: BattleState, v: HudView, h
       ),
       el("div", { class: "muted small keys", text: "Tab next unit · 1-4 formation · P pila · T enemy reach · Esc deselect" }),
     ),
+    button("Read the lesson", h.onLesson, "btn quiet wide"),
   );
 
   updateInspector(root, s, v);
@@ -87,17 +90,52 @@ export function renderLeftPanel(root: HTMLElement, s: BattleState, v: HudView, h
 }
 
 /**
+ * The reading panel: what you are trying to achieve, what is aimed at you, and what
+ * has happened. The left panel gives orders; this one is the answer to "why".
+ *
+ * The log keeps its own container because it only ever grows, and rebuilding it on
+ * every hover threw away the scroll position.
+ */
+export function renderRightPanel(root: HTMLElement, s: BattleState, v: HudView): void {
+  // Built once and then kept. Replacing the log's container every order would hand
+  // renderLog a fresh element each time, and its "only redraw when a line arrived"
+  // check reads a dataset flag off that element.
+  let objectives = root.querySelector<HTMLElement>(".objectives-slot");
+  if (!objectives) {
+    clear(root);
+    objectives = el("div", { class: "objectives-slot" });
+    root.append(objectives, el("div", { class: "danger-slot" }), el("div", { class: "log-slot" }));
+  }
+  clear(objectives);
+  objectives.append(renderObjectives(s));
+  updateDanger(root, v);
+  renderLog(root.querySelector<HTMLElement>(".log-slot")!, s);
+}
+
+/**
  * Redraws only the unit card and the combat forecast. Hovering the board fires
  * constantly, and rebuilding the whole panel each time threw away scroll position
  * and made the sidebar flicker.
  */
 export function updateInspector(root: HTMLElement, s: BattleState, v: HudView): void {
   const slot = root.querySelector<HTMLElement>(".inspect-slot");
+  if (slot) {
+    clear(slot);
+    const shown = v.selected ?? v.hover;
+    slot.append(renderUnitCard(shown, s, shown !== null && shown === v.selected));
+  }
+  const fc = root.querySelector<HTMLElement>(".forecast-slot");
+  if (fc) {
+    clear(fc);
+    if (v.forecast) fc.append(renderForecast(v.forecast));
+  }
+}
+
+/** The threat readout, which follows the cursor and so redraws on its own. */
+export function updateDanger(root: HTMLElement, v: HudView): void {
+  const slot = root.querySelector<HTMLElement>(".danger-slot");
   if (!slot) return;
   clear(slot);
-  const shown = v.selected ?? v.hover;
-  slot.append(renderUnitCard(shown, s, shown !== null && shown === v.selected));
-  if (v.forecast) slot.append(renderForecast(v.forecast));
   const danger = v.danger ? renderDanger(v.danger) : null;
   if (danger) slot.append(danger);
 }

@@ -6,6 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed — the Baroque skin
+
+The battle screen was redesigned, and the same stylesheet carries the menu, codex and modals so nothing is left unstyled. Light parchment out, midnight ground in: deep crimson for Rome, royal gold for rules and labels, royal purple for Dacia, emerald for an objective met. Type is Cinzel Decorative for display, Cinzel for body, JetBrains Mono for every number. Implemented from `docs/design_handoff_baroque_battle_screen/`, which is committed alongside as the reference.
+
+- `client/src/styles.css` replaced wholesale. No class was dropped: every selector the previous sheet styled is styled here too, and the design already targeted the post-refactor `.player` / `.enemy` side classes.
+- The canvas cannot read CSS, so `client/src/render.ts` carries the board palette separately: terrain fills, unit counters (crimson with a gold rim for Rome, royal purple with lavender for Dacia), the gold reach overlay with a rim so it reads on the dark ground, threat hatching, floating damage numbers and the strength bars.
+- The battle HUD was re-ordered as the design specifies. The left panel is now the acting panel: unit card, then formation, then strike mode, then the forecast, then end turn. Objectives, the threat readout and the dispatch log moved to the right column, which was previously the log alone.
+- New fonts in `client/index.html`. No new dependencies and no build changes.
+
+**Accessibility.** Every foreground/background pair in the palette was checked against WCAG AA. All text pairs pass: muted body text is 9.66:1 on panels, gold labels 8.40:1, ivory on the primary button 7.50:1, the objective checkmark 7.45:1 on its emerald chip. Two pairs look marginal measured naively and are not: the active formation button reads 4.17:1 against the very bottom of its gradient but 6.04:1 where the text actually sits, and emerald measures 2.50:1 against a panel but is only ever a border or a chip fill, never text, and "met" is carried by the checkmark and the row text as well as by colour.
+
 ### Performance
 
 Hovering the board re-ran the pathfinder twice and repainted the ground from scratch. Measured with `npm run bench` on the worst board the game ships (Sarmizegetusa, 14x10, 19 units), median of 5 runs, same machine before and after:
