@@ -219,6 +219,15 @@ export function applyResult(save: SaveState, result: BattleResult): ResultRespon
 }
 
 /**
+ * Opens every battle regardless of progress, for working on a later one without
+ * playing six to reach it. Off unless it is set, never written to the save, and
+ * it changes nothing about scoring: a battle still has to be won to be recorded.
+ */
+export function unlockAll(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.AQUILA_UNLOCK_ALL === "1";
+}
+
+/**
  * Whether an era is open. The first always is; a later one waits on the last
  * battle of the one before it, so the campaigns are a sequence and `order`
  * inside a campaign stays a position within that campaign.
@@ -226,6 +235,7 @@ export function applyResult(save: SaveState, result: BattleResult): ResultRespon
 export function isCampaignUnlocked(save: SaveState, campaignId: string): boolean {
   const campaign = CAMPAIGNS.find((c) => c.id === campaignId);
   if (!campaign) return false;
+  if (unlockAll()) return true;
   if (campaign.order <= 1) return true;
   const previous = CAMPAIGNS.find((c) => c.order === campaign.order - 1);
   if (!previous) return true;
@@ -236,6 +246,7 @@ export function isCampaignUnlocked(save: SaveState, campaignId: string): boolean
 export function isUnlocked(save: SaveState, scenarioId: string): boolean {
   const s = SCENARIO_BY_ID[scenarioId];
   if (!s) return false;
+  if (unlockAll()) return true;
   if (!isCampaignUnlocked(save, s.campaignId)) return false;
   if (s.order === 1) return true;
   const prev = scenariosOf(s.campaignId).find((x) => x.order === s.order - 1);

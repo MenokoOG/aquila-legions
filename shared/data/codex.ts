@@ -1,4 +1,5 @@
 import type { CodexEntry } from "../types.js";
+import { SCENARIOS } from "./scenarios.js";
 
 /** History codex. Unlocked by scenarios and objectives. Plain, checkable statements only. */
 export const CODEX: CodexEntry[] = [
@@ -244,3 +245,23 @@ export const CODEX: CodexEntry[] = [
 export const CODEX_BY_ID: Record<string, CodexEntry> = Object.fromEntries(
   CODEX.map((entry) => [entry.id, entry]),
 );
+
+/**
+ * Which era each entry belongs to, taken from the battle that unlocks it.
+ *
+ * Derived rather than written on the entry, because the answer is already in
+ * the scenario data and two places to state it is one place to get it wrong.
+ * An entry no battle unlocks is unreachable, and `test/codex.test.ts` says so.
+ */
+export const CODEX_CAMPAIGN: Record<string, string> = Object.fromEntries(
+  SCENARIOS.flatMap((s) => s.unlocksCodex.map((id) => [id, s.campaignId])),
+);
+
+/** The entries of one era, in the order its battles unlock them. */
+export function codexOf(campaignId: string): CodexEntry[] {
+  const order = SCENARIOS
+    .filter((s) => s.campaignId === campaignId)
+    .sort((a, b) => a.order - b.order)
+    .flatMap((s) => s.unlocksCodex);
+  return order.map((id) => CODEX_BY_ID[id]).filter((e): e is CodexEntry => !!e);
+}

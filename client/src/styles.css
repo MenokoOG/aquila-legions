@@ -475,8 +475,21 @@ input.name:focus-visible { border-color: var(--gold); outline-offset: 0; }
 }
 
 /* The era tabs on the campaign screen. */
-.campaign-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 1.2rem; }
-.btn.chip.locked { opacity: 0.5; cursor: not-allowed; }
+.campaign-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 0.6rem; }
+
+/*
+ * A locked era has to stay readable. Dimming it with opacity on this ground put
+ * it at roughly 12% alpha against near-black, which is why it read as missing
+ * rather than as locked. It is dimmed by colour instead, and stays above AA.
+ */
+.btn.chip.locked {
+  opacity: 1; cursor: help;
+  border-style: dashed; border-color: var(--rule-soft);
+  background: transparent; color: var(--muted-strong);
+}
+.btn.chip.locked:hover { border-color: var(--rule); color: var(--champagne); }
+.campaign-note { margin: 0 0 1.1rem; min-height: 1.2rem; }
+.campaign-note p { margin: 0; }
 .swatch.sw-hold { background: rgba(4, 99, 7, 0.4); border-color: var(--emerald); border-style: dashed; }
 .swatch.sw-exit { background: rgba(218, 165, 32, 0.28); border-color: var(--gold-lit); border-style: dashed; }
 
@@ -506,3 +519,8 @@ input.name:focus-visible { border-color: var(--gold); outline-offset: 0; }
 .counsel p { margin: 0 0 0.35rem; font-size: 0.9rem; line-height: 1.55; color: var(--champagne); font-style: italic; }
 .counsel.waiting p, .counsel:not(.said) p { font-style: normal; }
 .btn.wide.small { margin-top: 0.6rem; }
+
+/* Codex sections, once there was more than one era to hold apart. */
+.codex-section { margin: 0 0 2.2rem; }
+.codex-section > h2 { margin: 0 0 0.2rem; }
+.codex-section > .muted { margin: 0 0 0.9rem; }

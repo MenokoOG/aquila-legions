@@ -6,6 +6,27 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- **The commander row's last button was clipped.** Adding the Commentarii button was not the cause; moving the row inside `.scenario-list` was. That list is a `repeat(auto-fill, minmax(360px, 1fr))` grid, so a flex row whose buttons push right became one narrow cell and Reset fell off the end of it. The row is a sibling of the grid again.
+- **A locked era read as missing rather than locked.** The tab was being rendered all along, but `.btn:disabled` put it at 45% opacity, and a panel-coloured chip with a 30%-alpha gold border at 45% opacity is nothing at all against a near-black ground. It is dimmed by colour now — dashed border, muted text, both above AA — and it says the word "locked" rather than relying on the colour to carry it.
+- A locked era tab is no longer `disabled`. A disabled control cannot be focused, so nobody could ask it why it was shut. It is focusable, marked `aria-disabled`, and clicking it says what would open it.
+
+### Changed — the Codex is organised by era
+
+One flat grid was fine for thirteen entries. There are twenty-six now, plus seventeen units, five formations and seven kinds of ground, and it had become a wall.
+
+- History is grouped into a section per era, unlocked entries first within each, with a count.
+- A chip row filters the screen to one era. The legion stays on show whatever is filtered, because it is in every era.
+- The field manual gained a **Ground** section — what each terrain costs to enter and what it is worth to stand on, which the game had nowhere stated — and units are grouped by the roster they come from rather than listed in one run. Unit cards now show mounted, formations and brittle rather than only the numbers.
+- Which era an entry belongs to is derived from the battle that unlocks it (`CODEX_CAMPAIGN`), not written on the entry, so there is one place to get it wrong instead of two.
+
+### Added
+
+- `AQUILA_UNLOCK_ALL=1` opens every battle and era, for working on a later one without playing six to reach it. Off unless set, never written to the save, and it changes nothing about scoring.
+- `test/dom-stub.ts` and `test/screens.test.ts`: enough DOM to build a screen in Node, and 12 tests that walk the result. Both bugs above shipped because no test could reach a rendered screen — a typechecker cannot see a button in the wrong container. Reintroducing either bug fails these tests.
+- `test/codex.test.ts`: 12 tests that every entry has exactly one battle unlocking it, that every entry files under a real era with none left over, that an era's entries come back in the order its battles unlock them, and that the field manual shows every unit the game has rather than the ones somebody remembered to list.
+
 ### Added — the Praefectus borrows a voice (optional, off by default)
 
 The local adviser is correct, free and instant, and it reads like a rules engine, because it is one. With an `OPENAI_API_KEY` in the environment, a button in the panel asks a model to say the same thing in the voice of a camp prefect.

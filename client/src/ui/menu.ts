@@ -37,13 +37,49 @@ export function renderMenu(data: StateResponse, h: MenuHandlers): HTMLElement {
 
   const hero = el("div", { class: "hero" });
   const tabs = el("div", { class: "campaign-tabs" });
+  const note = el("div", { class: "campaign-note" });
+  const commander = el("div", { class: "commander-row" });
   const list = el("div", { class: "scenario-list" });
 
   function battlesOf(c: CampaignView | undefined): ScenarioSummary[] {
     return c ? scenarios.filter((s) => s.campaignId === c.id).sort((a, b) => a.order - b.order) : [];
   }
 
-  function draw(): void {
+  /** What has to happen before a locked era opens, in a sentence. */
+  function requirement(c: CampaignView): string {
+    const before = campaigns.find((x) => x.order === c.order - 1);
+    if (!before) return `${c.title} is not open yet.`;
+    const last = battlesOf(before).at(-1);
+    return last
+      ? `${c.title} opens when you win ${last.title}, the last battle of ${before.title}.`
+      : `${c.title} opens when you finish ${before.title}.`;
+  }
+
+  function drawTabs(): void {
+    clear(tabs);
+    for (const c of campaigns) {
+      const open = c.unlocked !== false;
+      const b = button(
+        open ? c.title : `${c.title} · locked`,
+        () => {
+          // A locked era is still worth reading about, and still worth being
+          // told why it is shut. It is left focusable and clickable and says so,
+          // rather than being a dead control nobody can interrogate.
+          if (open) { current = c; clear(note); drawTabs(); drawBody(); }
+          else { clear(note); note.append(el("p", { class: "muted small", text: requirement(c) })); }
+        },
+        `btn chip${c.id === current?.id ? " active" : ""}${open ? "" : " locked"}`,
+      );
+      b.setAttribute("aria-pressed", String(c.id === current?.id));
+      if (!open) {
+        b.setAttribute("aria-disabled", "true");
+        b.title = requirement(c);
+      }
+      tabs.append(b);
+    }
+  }
+
+  function drawBody(): void {
     const battles = battlesOf(current);
     const done = battles.filter((s) => s.record?.completed).length;
 
@@ -55,41 +91,27 @@ export function renderMenu(data: StateResponse, h: MenuHandlers): HTMLElement {
       el("p", { class: "intro", text: current?.blurb ?? "" }),
     );
 
-    clear(tabs);
-    for (const c of campaigns) {
-      const open = c.unlocked !== false;
-      const b = button(
-        open ? c.title : `${c.title} · locked`,
-        () => { if (open) { current = c; draw(); } },
-        `btn chip${c.id === current?.id ? " active" : ""}${open ? "" : " locked"}`,
-      );
-      b.disabled = !open;
-      b.setAttribute("aria-pressed", String(c.id === current?.id));
-      if (!open) {
-        const before = campaigns.find((x) => x.order === c.order - 1);
-        b.title = before ? `Finish ${before.title} to open this.` : "Not yet open.";
-      }
-      tabs.append(b);
-    }
+    // Its own row above the grid, not a cell inside it: it is a flex row whose
+    // buttons push right, and in a 360px grid cell the last of them is cut off.
+    clear(commander);
+    commander.append(
+      el("div", { class: "stat" }, el("span", { class: "label", text: "Commander" }), save.commander),
+      el("div", { class: "stat" }, el("span", { class: "label", text: "Rank" }), save.rank),
+      el("div", { class: "stat" }, el("span", { class: "label", text: "History points" }), String(save.historyPoints)),
+      el("div", { class: "stat" }, el("span", { class: "label", text: "This era" }), `${done} / ${battles.length}`),
+      el("div", { class: "stat-actions" },
+        button("Codex", h.onCodex),
+        button("Commentarii", h.onCommentarii),
+        button("Rename", h.onRename, "btn quiet"),
+        button("Reset", h.onReset, "btn quiet"),
+      ),
+    );
 
     clear(list);
-    list.append(
-      el("div", { class: "commander-row" },
-        el("div", { class: "stat" }, el("span", { class: "label", text: "Commander" }), save.commander),
-        el("div", { class: "stat" }, el("span", { class: "label", text: "Rank" }), save.rank),
-        el("div", { class: "stat" }, el("span", { class: "label", text: "History points" }), String(save.historyPoints)),
-        el("div", { class: "stat" }, el("span", { class: "label", text: "This era" }), `${done} / ${battles.length}`),
-        el("div", { class: "stat-actions" },
-          button("Codex", h.onCodex),
-          button("Commentarii", h.onCommentarii),
-          button("Rename", h.onRename, "btn quiet"),
-          button("Reset", h.onReset, "btn quiet"),
-        ),
-      ),
-      ...battles.map((s) => scenarioCard(s, h)),
-    );
+    list.append(...battles.map((s) => scenarioCard(s, h)));
   }
 
-  draw();
-  return el("section", { class: "menu" }, hero, tabs, list);
+  drawTabs();
+  drawBody();
+  return el("section", { class: "menu" }, hero, tabs, note, commander, list);
 }

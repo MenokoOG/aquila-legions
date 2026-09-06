@@ -104,6 +104,16 @@ npm run bench   # timings for the hot paths behind a mouse move
 
 For drawing cost, which Node cannot measure, open the battle screen with `?perf=1` (for example http://localhost:3117/?perf=1). The strip under the board then reports median and p95 for the board repaint and the threat map.
 
+## Working on a later battle
+
+Battles unlock in order and an era waits on the one before it, which is right for playing and tedious for building. To open everything without playing through:
+
+```bash
+AQUILA_UNLOCK_ALL=1 npm run dev
+```
+
+It never touches the save, and it changes nothing about scoring: a battle still has to be won to be recorded.
+
 ## The Praefectus's voice (optional, off by default, costs money)
 
 The advice above is written by a rules engine, and it reads like one. If you want it in the voice of a camp prefect, set an OpenAI key and a button appears in the panel:
