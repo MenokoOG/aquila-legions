@@ -13,8 +13,8 @@ import { type ThreatMap, threatAt, threatMap } from "../engine/threat.js";
 import { enemyTurn } from "../engine/ai/index.js";
 import { policyFor } from "../../../shared/data/ai-levels.js";
 import { Effects } from "../effects.js";
-import { type AdvisorHandlers, renderAdvisor } from "./advisorPanel.js";
-import { firedTriggers, noteFromTip } from "../advisor/commentarii.js";
+import { type AdvisorHandlers, type Counsel, renderAdvisor } from "./advisorPanel.js";
+import { firedTriggers, noteFromCounsel, noteFromTip } from "../advisor/commentarii.js";
 import { clearToasts, toast } from "./toast.js";
 import { api } from "../api.js";
 import { type Highlights, render, sizeCanvas } from "../render.js";
@@ -34,6 +34,11 @@ import { showModal } from "./modal.js";
 export interface BattleScreenHandlers {
   onFinished: (state: BattleState) => void;
   onWithdraw: () => void;
+  /**
+   * Whether this machine has counsel configured. False, or absent, and the
+   * button is never built: a control that cannot work should not be shown.
+   */
+  counsel?: boolean;
 }
 
 /** How many orders can be taken back. Undo never crosses into the enemy turn. */
@@ -244,11 +249,48 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
     checkTriggers();
   }
 
+  /**
+   * The prefect's phrasing, when it has been asked for. Reset every turn: it is
+   * advice about this board, not a thing to leave lying around.
+   */
+  let counsel: Counsel = { state: "idle", text: "" };
+
   const advisorHandlers: AdvisorHandlers = {
     kept: filed,
+    counsel,
     onFocus: (unitId) => { selectedId = unitId; mode = "attack"; drawAll(); },
     onKeep: (tip) => { void keep(noteFromTip(s, tip)); },
+    onAsk: h.counsel ? (facts) => { void ask(facts); } : undefined,
+    onKeepCounsel: (text) => { void keep(noteFromCounsel(s, text)); },
   };
+
+  /**
+   * Sends this turn's local advice to be put in the prefect's own words. The
+   * sentences that go out are ones this machine already worked out and is
+   * already showing; nothing about the save, the campaign or the player goes
+   * with them. Any failure leaves the local tips exactly as they were.
+   */
+  async function ask(facts: string[]): Promise<void> {
+    if (!facts.length || counsel.state === "asking") return;
+    counsel = { state: "asking", text: "" };
+    advisorHandlers.counsel = counsel;
+    drawAll();
+    try {
+      const out = await api.counsel({
+        title: scenario.title,
+        tactic: scenario.tactic,
+        turn: s.turn,
+        maxTurns: scenario.maxTurns,
+        enemy: s.campaign.enemy.adjective,
+        facts,
+      });
+      counsel = { state: "said", text: out.text };
+    } catch {
+      counsel = { state: "silent", text: "" };
+    }
+    advisorHandlers.counsel = counsel;
+    drawAll();
+  }
 
   /** Files a note and shows it. Never blocks a turn: a failure is silent. */
   async function keep(entry: CommentariusEntry): Promise<void> {
@@ -395,6 +437,9 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
     history = [];
     selectedId = null;
     endTurn(s);
+    // His advice was about the board as it stood. It does not carry over.
+    counsel = { state: "idle", text: "" };
+    advisorHandlers.counsel = counsel;
     drawAll();
     if (s.over) { busy = false; await finish(); return; }
     await sleep(350);

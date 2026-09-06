@@ -496,3 +496,13 @@ input.name:focus-visible { border-color: var(--gold); outline-offset: 0; }
 .deploy-row.selected { background: rgba(218, 165, 32, 0.10); border-radius: 4px; }
 .deploy-name { flex: 1 1 auto; text-align: left; padding: 0.2rem 0.4rem; }
 .mono { font-family: var(--font-mono); }
+
+/* The Praefectus in his own words. Set apart from the local tips above it. */
+.counsel {
+  margin-top: 0.6rem; padding: 0.6rem 0.7rem;
+  border-top: 1px solid var(--rule); border-left: 2px solid var(--crimson-lit);
+  background: rgba(139, 0, 0, 0.10); border-radius: 0 var(--radius) var(--radius) 0;
+}
+.counsel p { margin: 0 0 0.35rem; font-size: 0.9rem; line-height: 1.55; color: var(--champagne); font-style: italic; }
+.counsel.waiting p, .counsel:not(.said) p { font-style: normal; }
+.btn.wide.small { margin-top: 0.6rem; }
