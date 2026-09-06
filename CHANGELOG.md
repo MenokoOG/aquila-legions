@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added — the page says when the server is older than it is
+
+`express.static` reads `dist/` from disk per request, so a server left running across a `git pull` serves the rebuilt page off the rules it loaded at startup. The result is a current screen against a stale API — a campaign the client would happily draw that the server never mentions, a save version it rejects, a route that 404s — and nothing anywhere says so. It reads as a bug in the feature.
+
+The bundle is stamped with its build time (`__BUILT_AT__`, set in `client/vite.config.ts`), `GET /api/state` reports when the process loaded its code, and a banner appears if the second is earlier than the first.
+
+It only catches a server new enough to send the stamp, so it cannot catch the case that prompted it — a process predating the feature has nothing to report. It stops the next one.
+
+- `client/src/ui/staleBanner.ts`, and 5 tests over it, including that the banner never stacks on a reload and that it sits above whatever was already on the page. 217 pass.
+
 ### Fixed
 
 - **The commander row's last button was clipped.** Adding the Commentarii button was not the cause; moving the row inside `.scenario-list` was. That list is a `repeat(auto-fill, minmax(360px, 1fr))` grid, so a flex row whose buttons push right became one narrow cell and Reset fell off the end of it. The row is a sibling of the grid again.

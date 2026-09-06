@@ -25,6 +25,8 @@ export interface StateResponse {
   campaigns: CampaignView[];
   /** Whether the optional Praefectus counsel route is configured on this machine. */
   counsel?: boolean;
+  /** When the API process loaded its code. Compared against this bundle's build stamp. */
+  startedAt?: number;
   scenarios: ScenarioSummary[];
 }
 

@@ -524,3 +524,11 @@ input.name:focus-visible { border-color: var(--gold); outline-offset: 0; }
 .codex-section { margin: 0 0 2.2rem; }
 .codex-section > h2 { margin: 0 0 0.2rem; }
 .codex-section > .muted { margin: 0 0 0.9rem; }
+
+/* Shown only when the API process is older than this bundle. */
+.stale-banner {
+  padding: 0.7rem 1.1rem; font-size: 0.86rem; line-height: 1.5;
+  color: var(--ivory); background: linear-gradient(180deg, var(--crimson-lit), #6E0000);
+  border-bottom: 1px solid var(--gold);
+}
+.stale-banner strong { color: var(--gold-lit); }

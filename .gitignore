@@ -1,4 +1,6 @@
 node_modules/
 dist/
 data/save.json
+# The migration keeps a copy of the previous version beside it. Also the player's.
+data/*.bak
 .env

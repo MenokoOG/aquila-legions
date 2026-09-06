@@ -9,8 +9,12 @@ import { renderMenu } from "./ui/menu.js";
 import { renderCodex } from "./ui/codex.js";
 import { renderCommentarii } from "./ui/commentarii.js";
 import { type Dispose, mountBattle } from "./ui/battleScreen.js";
+import { warnIfStale } from "./ui/staleBanner.js";
 
 /** Screen router. Menu, battle, codex. Nothing else lives here. */
+
+/** Stamped into the bundle at build time by `vite.config.ts`. */
+declare const __BUILT_AT__: number;
 
 const screen = document.getElementById("screen")!;
 const nav = document.getElementById("nav")!;
@@ -42,6 +46,7 @@ function fail(err: unknown): void {
 async function showMenu(): Promise<void> {
   try {
     const data = await api.state();
+    warnIfStale(data.startedAt, __BUILT_AT__, document.body);
     swap();
     setNav(
       el("span", { class: "pill", text: `${data.save.rank}` }),
