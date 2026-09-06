@@ -13,6 +13,7 @@ installDom();
 
 const { renderMenu } = await import("../client/src/ui/menu.js");
 const { renderCodex } = await import("../client/src/ui/codex.js");
+const { serverIsStale, warnIfStale } = await import("../client/src/ui/staleBanner.js");
 
 /**
  * The screens, built and walked.
@@ -169,5 +170,45 @@ describe("the codex screen", () => {
       entries.map((e) => (e.id === one.id ? { ...e, unlocked: true } : e)), NOOP.onBack,
     ) as unknown as StubNode;
     ok(textOf(codex).includes(one.body[0]!), "an unlocked entry should be readable");
+  });
+});
+
+describe("the stale-server warning", () => {
+  const BUILT = 2_000_000;
+
+  it("says nothing when the server is at least as new as the page", () => {
+    strictEqual(serverIsStale(BUILT, BUILT), false, "started at the same moment is fine");
+    strictEqual(serverIsStale(BUILT + 1, BUILT), false);
+  });
+
+  it("says nothing when there is nothing to compare", () => {
+    strictEqual(serverIsStale(undefined, BUILT), false, "an older server has no stamp to send");
+    strictEqual(serverIsStale(BUILT - 1, 0), false, "and a dev bundle may have no stamp either");
+    strictEqual(serverIsStale(Number.NaN, BUILT), false);
+  });
+
+  it("catches the case that cost two rounds: a server started before the build", () => {
+    ok(serverIsStale(BUILT - 1, BUILT));
+    const body = document.createElement("div") as unknown as StubNode;
+    ok(warnIfStale(BUILT - 1, BUILT, body as unknown as HTMLElement));
+    const banner = findAll(body, (n) => hasClass(n, "stale-banner"));
+    strictEqual(banner.length, 1);
+    ok(/older than this page/i.test(textOf(banner[0]!)), "it has to name the problem");
+    ok(/start it again/i.test(textOf(banner[0]!)), "and say what to do about it");
+  });
+
+  it("does not stack a second banner on a reload", () => {
+    const body = document.createElement("div") as unknown as StubNode;
+    warnIfStale(BUILT - 1, BUILT, body as unknown as HTMLElement);
+    warnIfStale(BUILT - 1, BUILT, body as unknown as HTMLElement);
+    strictEqual(findAll(body, (n) => hasClass(n, "stale-banner")).length, 1);
+  });
+
+  it("puts it at the top, above whatever was already there", () => {
+    const body = document.createElement("div") as unknown as StubNode;
+    body.append(document.createElement("main") as unknown as StubNode);
+    warnIfStale(BUILT - 1, BUILT, body as unknown as HTMLElement);
+    strictEqual(body.children[0]?.className, "stale-banner");
+    strictEqual(body.children[1]?.tagName, "main");
   });
 });

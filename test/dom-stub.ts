@@ -24,6 +24,7 @@ export interface StubNode {
   setAttribute(name: string, value: string): void;
   getAttribute(name: string): string | null;
   append(...nodes: (StubNode | string | null | undefined)[]): void;
+  prepend(...nodes: (StubNode | string | null | undefined)[]): void;
   removeChild(child: StubNode): void;
   addEventListener(type: string, fn: () => void): void;
   click(): void;
@@ -50,6 +51,11 @@ function node(tagName: string): StubNode {
         n.parent = self;
         self.children.push(n);
       }
+    },
+    prepend(...nodes) {
+      const kept = self.children.splice(0, self.children.length);
+      self.append(...nodes);
+      self.children.push(...kept);
     },
     removeChild(child) {
       const i = self.children.indexOf(child);

@@ -104,6 +104,14 @@ npm run bench   # timings for the hot paths behind a mouse move
 
 For drawing cost, which Node cannot measure, open the battle screen with `?perf=1` (for example http://localhost:3117/?perf=1). The strip under the board then reports median and p95 for the board repaint and the threat map.
 
+## If the page and the server disagree
+
+`express.static` reads `dist/` from disk on every request, so a server left running across a `git pull` serves the **rebuilt page off its own stale rules**: new screens, an API from before the pull. Campaigns go missing, routes 404, the save version is rejected — and every symptom looks like a bug in the feature rather than in the process.
+
+The page now says so. If the API process started before the bundle it is serving, a banner appears at the top telling you to restart it. Restarting the server is the whole fix.
+
+It can only catch a server new enough to report when it started, so the very first time you hit this after pulling this change, you will still have to work it out yourself. After that it is a sentence at the top of the page.
+
 ## Working on a later battle
 
 Battles unlock in order and an era waits on the one before it, which is right for playing and tedious for building. To open everything without playing through:

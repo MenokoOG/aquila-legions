@@ -9,7 +9,7 @@ import { file, toMarkdown } from "./commentarii.js";
 import { counsel, counselAvailable, readRequest } from "./counsel.js";
 
 /** REST surface. All game rules live in progress.ts; this file only routes. */
-export function buildRouter(store: SaveStore): Router {
+export function buildRouter(store: SaveStore, startedAt = Date.now()): Router {
   const router = Router();
 
   router.get("/state", (_req, res) => {
@@ -23,7 +23,7 @@ export function buildRouter(store: SaveStore): Router {
     const campaigns = CAMPAIGNS.map((c) => ({ ...c, unlocked: isCampaignUnlocked(save, c.id) }));
     // Whether a key is configured, so the client can hide a button that cannot
     // work. Never the key itself, and never anything derived from it.
-    res.json({ save, campaigns, scenarios, counsel: counselAvailable() });
+    res.json({ save, campaigns, scenarios, counsel: counselAvailable(), startedAt });
   });
 
   router.get("/scenario/:id", (req, res) => {
