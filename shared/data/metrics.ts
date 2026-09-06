@@ -24,6 +24,7 @@ export const METRICS: Record<Metric, MetricDef> = {
   testudoTurnsUnderFire: { label: "cohort-turns under fire", clean: "none" },
   orbisHeldTurns: { label: "cohort-turns held", clean: "none" },
   cohortsYetToThrow: { label: "yet to throw", clean: "all thrown" },
+  pilaVolleys: { label: "volleys thrown", clean: "none thrown" },
   pilaSkipped: { label: "drew first", clean: "volley first" },
   turns: { label: "turns", clean: "none" },
 };

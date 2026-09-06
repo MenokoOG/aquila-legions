@@ -216,6 +216,7 @@ export function metrics(s: BattleState): MetricBag {
     testudoTurnsUnderFire: t.testudoTurnsUnderFire,
     orbisHeldTurns: t.orbisHeldTurns,
     cohortsYetToThrow: unitsOf(s, "player").filter((u) => isCore(u) && !t.cohortsThrown.has(u.id)).length,
+    pilaVolleys: t.cohortsThrown.size,
     pilaSkipped: t.pilaViolated ? 1 : 0,
     turns: s.turn,
   };

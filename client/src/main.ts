@@ -7,6 +7,7 @@ import { button, clear, el } from "./ui/dom.js";
 import { showModal } from "./ui/modal.js";
 import { renderMenu } from "./ui/menu.js";
 import { renderCodex } from "./ui/codex.js";
+import { renderCommentarii } from "./ui/commentarii.js";
 import { type Dispose, mountBattle } from "./ui/battleScreen.js";
 
 /** Screen router. Menu, battle, codex. Nothing else lives here. */
@@ -49,6 +50,7 @@ async function showMenu(): Promise<void> {
     screen.append(renderMenu(data, {
       onStart: (id) => void startBattle(id),
       onCodex: () => void showCodex(),
+      onCommentarii: () => void showCommentarii(),
       onRename: () => rename(data.save.commander),
       onReset: () => confirmReset(),
     }));
@@ -63,6 +65,18 @@ async function showCodex(): Promise<void> {
     swap();
     setNav(button("Campaign", () => void showMenu(), "btn quiet"));
     screen.append(renderCodex(entries, () => void showMenu()));
+    window.scrollTo(0, 0);
+  } catch (err) {
+    fail(err);
+  }
+}
+
+async function showCommentarii(): Promise<void> {
+  try {
+    const entries = await api.commentarii();
+    swap();
+    setNav(button("Campaign", () => void showMenu(), "btn quiet"));
+    screen.append(renderCommentarii(entries, () => void showMenu()));
     window.scrollTo(0, 0);
   } catch (err) {
     fail(err);

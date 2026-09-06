@@ -6,6 +6,34 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added — the Praefectus and the Commentarii
+
+Two things, both local, both deterministic. There is no model anywhere in this and nothing leaves the machine.
+
+**The Praefectus** is a camp prefect at your shoulder: two or three sentences in the right-hand column about the board as it stands. A cohort in bow range that a tortoise would answer. A cohort in contact with its pila unthrown, and what that costs the volley objective. A charge whose counter-attack could break the unit making it. Horsemen who can reach you next turn, and the circle that answers them. A cohort down where routing becomes likely. The clock, when the field is not clear and there is not much of it left.
+
+Every tip is read off something the game already computes and already shows somewhere — `threatMap`, `forecast`, `objectiveProgress`. The adviser tells you nothing you could not have worked out, which is the point: it is a teaching aid, not an oracle, and it is pure, so it is testable.
+
+**The Commentarii** is the notebook. Three things file into it:
+
+- **Knowledge triggers**, the moment they happen. The first pilum volley, the first tortoise under fire, the first wedge that breaks a line, the first flank kill, the first cohort lost — each writes a short historical note while the board still shows what the sentence is about. A corner notice says one arrived; nothing is blocked and no turn is interrupted. The Codex unlocks at the end of a battle, which is the wrong moment for a fact about a thing you just did for the first time.
+- **Codex entries**, on unlock, so everything the campaign has taught you is in one place.
+- **Tips you keep**, by pressing Keep on one.
+
+A trigger is a comparison against a battle metric, judged by the same comparator objectives use, so a note is data (`shared/data/triggers.ts`) rather than a branch in the engine. Notes fire once per campaign, not once per battle. Every claim in one is checkable in Dio, Vegetius, Josephus, Tacitus, Ammianus, Caesar, or on Trajan's Column, per the accuracy rule this game is held to.
+
+The screen filters by tag and exports the whole notebook as markdown from `GET /api/commentarii.md` — a real file, because the rule this project is built to says anything worth keeping is a file in a repository.
+
+### Changed
+
+- **The save is version 2.** It gained `commentarii` and nothing else. `sanitizeSave` migrates a v1 file on read, keeping every point, objective and codex entry it had. Because a v1 build meeting a v2 file would reject it and start a fresh campaign, `SaveStore` copies the file to `save.json.v1.bak` once, before the first v2 write. The way back is a file copy.
+- The notebook is written by the client, so it is cleaned on the way in like everything else that crosses the wire: an entry without an id or a title is dropped, the same id is never filed twice, an unknown source becomes a tip rather than being believed, and a scenario id the game does not have is blanked.
+
+### Added
+
+- `test/advisor.test.ts`: 16 tests. Each puts the board in the state a tip is about and asks for the tip — and, as often, puts it one step past that and checks the tip has stopped.
+- `test/commentarii.test.ts`: 12 tests over the v1 to v2 migration, the backup, filing, and the markdown export. 145 pass.
+
 ### Changed — the enemy fights
 
 `enemyTurn` was 95 lines of greedy per-unit behaviour: sort by role, walk at the nearest Roman, swing at whoever is adjacent. It was readable and it was exploitable — every scenario solved the same way, by baiting one warband at a time onto a cohort of your choosing. The host now plans as a host. `client/src/engine/ai/` replaces `client/src/engine/ai.ts`: `evaluate.ts` prices a blow or a hex, `act.ts` takes one unit's turn, `index.ts` runs the host's.

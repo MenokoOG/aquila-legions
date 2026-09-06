@@ -5,6 +5,7 @@ import { CAMPAIGNS } from "../shared/data/campaigns.js";
 import { CODEX } from "../shared/data/codex.js";
 import { SaveStore } from "./store.js";
 import { applyResult, isUnlocked, sanitizeStats } from "./progress.js";
+import { file, toMarkdown } from "./commentarii.js";
 
 /** REST surface. All game rules live in progress.ts; this file only routes. */
 export function buildRouter(store: SaveStore): Router {
@@ -47,6 +48,25 @@ export function buildRouter(store: SaveStore): Router {
     } catch (err) {
       return res.status(400).json({ error: (err as Error).message });
     }
+  });
+
+  router.get("/commentarii", (_req, res) => {
+    res.json(store.load().commentarii);
+  });
+
+  /** The notebook as a file, which is the form the player can keep. */
+  router.get("/commentarii.md", (_req, res) => {
+    res.type("text/markdown; charset=utf-8")
+      .set("content-disposition", 'attachment; filename="commentarii.md"')
+      .send(toMarkdown(store.load()));
+  });
+
+  router.post("/commentarii", (req, res) => {
+    const body = req.body as { entries?: unknown };
+    const save = store.load();
+    const added = file(save, body?.entries);
+    if (added.length) store.save(save);
+    return res.json({ added, commentarii: save.commentarii });
   });
 
   router.post("/commander", (req, res) => {

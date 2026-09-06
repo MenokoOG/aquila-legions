@@ -1,5 +1,6 @@
 import type {
-  BattleResult, BattleStats, CodexEntry, MetricBag, ResultResponse, SaveState, ScenarioRecord,
+  BattleResult, BattleStats, CodexEntry, CommentariusEntry, MetricBag, ResultResponse, SaveState,
+  ScenarioRecord,
 } from "../shared/types.js";
 import { objectiveMet } from "../shared/objectives.js";
 import { METRIC_KEYS } from "../shared/data/metrics.js";
@@ -15,14 +16,18 @@ export function rankFor(points: number): string {
   return title;
 }
 
+/** The save shape this build writes. A v1 file on disk is migrated on read. */
+export const SAVE_VERSION = 2;
+
 export function freshSave(): SaveState {
   return {
-    version: 1,
+    version: 2,
     commander: "Legatus",
     historyPoints: 0,
     rank: "Tiro (Recruit)",
     scenarios: {},
     codexUnlocked: [],
+    commentarii: [],
     battles: 0,
     updatedAt: new Date().toISOString(),
   };
@@ -49,6 +54,51 @@ function record(raw: unknown, scenarioId: string): ScenarioRecord | null {
   };
 }
 
+/** The blank line between a codex entry's paragraphs when it is filed as one note. */
+const BLANK_LINE = "\n\n";
+
+/** How long a note may be before it is cut. Nothing in the game writes near this. */
+const NOTE_LIMIT = 2000;
+const NOTEBOOK_LIMIT = 500;
+
+const SOURCES = new Set(["trigger", "codex", "tip"]);
+
+function text(v: unknown, limit: number): string {
+  return typeof v === "string" ? v.trim().slice(0, limit) : "";
+}
+
+/**
+ * The notebook is written by the client and read back by it, so it is cleaned
+ * on the way in like everything else: entries without an id or a title are
+ * dropped, the same id is never filed twice, and the oldest go first if it ever
+ * grows past the limit.
+ */
+export function sanitizeCommentarii(raw: unknown): CommentariusEntry[] {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  const out: CommentariusEntry[] = [];
+  for (const item of raw) {
+    if (typeof item !== "object" || item === null) continue;
+    const e = item as Partial<CommentariusEntry>;
+    const id = text(e.id, 64);
+    const title = text(e.title, 120);
+    if (!id || !title || seen.has(id)) continue;
+    seen.add(id);
+    out.push({
+      id,
+      source: SOURCES.has(e.source as string) ? e.source as CommentariusEntry["source"] : "tip",
+      title,
+      body: text(e.body, NOTE_LIMIT),
+      tags: Array.isArray(e.tags)
+        ? [...new Set(e.tags.filter((t): t is string => typeof t === "string").map((t) => t.trim().slice(0, 32)))].slice(0, 8)
+        : [],
+      scenarioId: SCENARIO_BY_ID[text(e.scenarioId, 64)] ? text(e.scenarioId, 64) : "",
+      at: text(e.at, 40) || new Date().toISOString(),
+    });
+  }
+  return out.slice(-NOTEBOOK_LIMIT);
+}
+
 /**
  * The battle report arrives over HTTP, so it is read the same way the save file
  * is: every metric is present, whole and non-negative, whatever was posted.
@@ -69,8 +119,11 @@ export function sanitizeStats(raw: unknown): BattleStats {
 export function sanitizeSave(raw: unknown): SaveState {
   const base = freshSave();
   if (typeof raw !== "object" || raw === null) return base;
-  const r = raw as Partial<SaveState>;
-  if (r.version !== 1) return base;
+  const r = raw as Omit<Partial<SaveState>, "version"> & { version?: unknown };
+  // v1 knew nothing about the Commentarii. Reading one is the migration: every
+  // other field is unchanged, so an old campaign keeps its points and its codex
+  // and gains an empty notebook. `SaveStore` keeps a copy of the v1 file first.
+  if (r.version !== 1 && r.version !== 2) return base;
 
   const scenarios: Record<string, ScenarioRecord> = {};
   for (const [id, value] of Object.entries(r.scenarios ?? {})) {
@@ -87,12 +140,13 @@ export function sanitizeSave(raw: unknown): SaveState {
   const commander = typeof r.commander === "string" && r.commander.trim() ? r.commander.trim().slice(0, 32) : base.commander;
 
   return {
-    version: 1,
+    version: 2,
     commander,
     historyPoints,
     rank: rankFor(historyPoints),
     scenarios,
     codexUnlocked,
+    commentarii: sanitizeCommentarii(r.commentarii),
     battles: count(r.battles),
     updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : base.updatedAt,
   };
@@ -140,6 +194,15 @@ export function applyResult(save: SaveState, result: BattleResult): ResultRespon
         if (entry) {
           save.codexUnlocked.push(id);
           newCodex.push(entry);
+          save.commentarii.push({
+            id: `codex:${entry.id}`,
+            source: "codex",
+            title: entry.title,
+            body: entry.body.join(BLANK_LINE),
+            tags: entry.tags,
+            scenarioId: scenario.id,
+            at: new Date().toISOString(),
+          });
         }
       }
     }

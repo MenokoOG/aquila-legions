@@ -29,6 +29,7 @@ Then open http://localhost:3117.
 - Cohorts carry pila. Select "Throw pila" and click an adjacent enemy. Once per battle, no retaliation. Throw first, then fight.
 - A unit that drops under a quarter of its men routs. Flanked units (two or more enemies adjacent) take extra damage; Orbis cannot be flanked.
 - The objective list tracks itself as you play, so you can see the lesson landing or slipping before the battle is over.
+- The Praefectus panel on the right says the two or three things an officer would mention: form the tortoise, throw before you draw, that charge gets you broken, the horse arrives next turn. Press **Keep** on one to file it in your Commentarii.
 - Undo takes back orders within your own turn. Ending the turn commits: the Dacians move, and the dice are not re-rollable.
 - Clear the field before the turn limit.
 
@@ -55,6 +56,18 @@ data/save.json   your campaign (git-ignored)
 ```
 
 One responsibility per file. The combat formulas live in `client/src/engine/rules.ts`; the formation numbers in `shared/data/formations.ts`; the rosters in `shared/data/units-*.ts`; the battles in `shared/data/scenarios.ts`; the history in `shared/data/codex.ts`.
+
+### The Commentarii
+
+Your notebook, on the campaign screen. Codex entries file themselves into it when you unlock them, and so do the notes that fire the first time you do a thing — the first pilum volley, the first tortoise under fire, the first wedge that breaks a line. Filter by tag, and export the lot as markdown: `GET /api/commentarii.md` writes a real file.
+
+The notes live in `shared/data/triggers.ts` as data, and each one is a comparison against a battle metric judged by the same comparator the objectives use. Adding one is a row, not a branch.
+
+### The enemy
+
+`client/src/engine/ai/` decides the enemy's turn. It prices every option through `forecast`, the same pure formula your own forecast panel shows, so it cannot know a number you cannot see. The host picks one unit to break each turn, weighs every hex it could attack from — which is where flanking, the charge and the high ground come from, rather than from any rule about them — and, at the top level, waits for a neighbour instead of walking into the legion alone.
+
+How well it fights is a property of the scenario (`shared/data/ai-levels.ts`), and the briefing names it. The first two battles are a probe. Sarmizegetusa is not.
 
 ### Adding a campaign
 

@@ -1,4 +1,4 @@
-import type { Formation, Hex, Scenario } from "../../../shared/types.js";
+import type { CommentariusEntry, Formation, Hex, Scenario } from "../../../shared/types.js";
 import { FORMATION_ORDER } from "../../../shared/data/formations.js";
 import { boardPixelSize, fromPixel, key } from "../hex.js";
 import {
@@ -13,6 +13,10 @@ import { type ThreatMap, threatAt, threatMap } from "../engine/threat.js";
 import { enemyTurn } from "../engine/ai/index.js";
 import { policyFor } from "../../../shared/data/ai-levels.js";
 import { Effects } from "../effects.js";
+import { type AdvisorHandlers, renderAdvisor } from "./advisorPanel.js";
+import { firedTriggers, noteFromTip } from "../advisor/commentarii.js";
+import { clearToasts, toast } from "./toast.js";
+import { api } from "../api.js";
 import { type Highlights, render, sizeCanvas } from "../render.js";
 import {
   type ActionMode, type DangerView, renderLeftPanel, renderRightPanel, updateDanger, updateInspector,
@@ -50,6 +54,15 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
   // Recomputed once per order and reused while the cursor moves, so hovering stays cheap.
   let threat: ThreatMap = new Map();
   const fx = new Effects();
+  /**
+   * Every note already in the Commentarii, so a trigger fires once in a
+   * campaign rather than once a battle. Seeded from the save; failing to reach
+   * the server just means nothing files, and the fight is unaffected.
+   */
+  const filed = new Set<string>();
+  void api.commentarii()
+    .then((entries) => { for (const e of entries) filed.add(e.id); })
+    .catch(() => { /* the notebook is optional; the battle is not */ });
 
   const left = el("aside", { class: "panel left" });
   const canvas = el("canvas", { class: "board" });
@@ -201,6 +214,38 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
       onLesson: () => showLesson(),
     });
     renderRightPanel(right, s, view());
+    renderAdvisor(right, s, advisorHandlers);
+    checkTriggers();
+  }
+
+  const advisorHandlers: AdvisorHandlers = {
+    kept: filed,
+    onFocus: (unitId) => { selectedId = unitId; mode = "attack"; drawAll(); },
+    onKeep: (tip) => { void keep(noteFromTip(s, tip)); },
+  };
+
+  /** Files a note and shows it. Never blocks a turn: a failure is silent. */
+  async function keep(entry: CommentariusEntry): Promise<void> {
+    if (filed.has(entry.id)) return;
+    filed.add(entry.id);
+    try {
+      await api.file([entry]);
+      drawAll();
+    } catch {
+      filed.delete(entry.id);
+    }
+  }
+
+  /**
+   * Notes that fire the moment the thing happens, while the board still shows
+   * what the sentence is about. Undo does not unfile one: it did happen.
+   */
+  function checkTriggers(): void {
+    for (const note of firedTriggers(s, filed)) {
+      filed.add(note.id);
+      toast(note.title, note.body);
+      void api.file([note]).catch(() => filed.delete(note.id));
+    }
   }
 
   function startAnimation(): void {
@@ -380,7 +425,7 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
   drawAll();
   showLesson();
 
-  return () => unbindKeys();
+  return () => { unbindKeys(); clearToasts(); };
 }
 
 export { toStats };

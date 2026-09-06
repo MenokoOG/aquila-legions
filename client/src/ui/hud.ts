@@ -104,7 +104,12 @@ export function renderRightPanel(root: HTMLElement, s: BattleState, v: HudView):
   if (!objectives) {
     clear(root);
     objectives = el("div", { class: "objectives-slot" });
-    root.append(objectives, el("div", { class: "danger-slot" }), el("div", { class: "log-slot" }));
+    root.append(
+      el("div", { class: "advisor-slot" }),
+      objectives,
+      el("div", { class: "danger-slot" }),
+      el("div", { class: "log-slot" }),
+    );
   }
   clear(objectives);
   objectives.append(renderObjectives(s));

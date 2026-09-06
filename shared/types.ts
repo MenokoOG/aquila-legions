@@ -151,6 +151,7 @@ export type Metric =
   | "testudoTurnsUnderFire"
   | "orbisHeldTurns"
   | "cohortsYetToThrow"
+  | "pilaVolleys"
   | "pilaSkipped"
   | "turns";
 
@@ -240,13 +241,32 @@ export interface ScenarioRecord {
   objectivesMet: string[];
 }
 
+/**
+ * One thing worth keeping, in the player's own notebook. Codex entries file
+ * themselves here on unlock, knowledge triggers file themselves the moment they
+ * fire, and a tip from the Praefectus files itself when the player pins it.
+ */
+export interface CommentariusEntry {
+  /** The trigger, codex or tip id. Filing the same thing twice is a no-op. */
+  id: string;
+  source: "trigger" | "codex" | "tip";
+  title: string;
+  body: string;
+  tags: string[];
+  /** The battle it happened in, or "" for anything filed outside one. */
+  scenarioId: string;
+  at: string;
+}
+
 export interface SaveState {
-  version: 1;
+  version: 2;
   commander: string;
   historyPoints: number;
   rank: string;
   scenarios: Record<string, ScenarioRecord>;
   codexUnlocked: string[];
+  /** The notebook. Appended to, never rewritten; ordered oldest first. */
+  commentarii: CommentariusEntry[];
   battles: number;
   updatedAt: string;
 }

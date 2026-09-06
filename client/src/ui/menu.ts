@@ -6,6 +6,7 @@ import { button, el } from "./dom.js";
 export interface MenuHandlers {
   onStart: (scenarioId: string) => void;
   onCodex: () => void;
+  onCommentarii: () => void;
   onRename: () => void;
   onReset: () => void;
 }
@@ -46,6 +47,7 @@ export function renderMenu(data: StateResponse, h: MenuHandlers): HTMLElement {
       el("div", { class: "stat" }, el("span", { class: "label", text: "Campaign" }), `${done} / ${scenarios.length}`),
       el("div", { class: "stat-actions" },
         button("Codex", h.onCodex),
+        button("Commentarii", h.onCommentarii),
         button("Rename", h.onRename, "btn quiet"),
         button("Reset", h.onReset, "btn quiet"),
       ),

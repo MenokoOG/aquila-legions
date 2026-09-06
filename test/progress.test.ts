@@ -11,7 +11,7 @@ function stats(over: Partial<MetricBag> = {}, won = true): BattleStats {
     won,
     metrics: {
       enemiesLeft: 0, turns: 6, playerLosses: 100, enemyLosses: 900,
-      pilaSkipped: 0, cohortsYetToThrow: 0, missileLosses: 0,
+      pilaSkipped: 0, cohortsYetToThrow: 0, pilaVolleys: 0, missileLosses: 0,
       cuneusKills: 0, flankKills: 0, cavalryKills: 0,
       cohortsRouted: 0, testudoTurnsUnderFire: 0, orbisHeldTurns: 0,
       ...over,
