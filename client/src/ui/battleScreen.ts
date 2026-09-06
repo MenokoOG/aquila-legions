@@ -13,7 +13,9 @@ import { type ThreatMap, threatAt, threatMap } from "../engine/threat.js";
 import { enemyTurn } from "../engine/ai.js";
 import { Effects } from "../effects.js";
 import { type Highlights, render, sizeCanvas } from "../render.js";
-import { type ActionMode, type DangerView, renderLeftPanel, renderLog, updateInspector } from "./hud.js";
+import {
+  type ActionMode, type DangerView, renderLeftPanel, renderRightPanel, updateDanger, updateInspector,
+} from "./hud.js";
 import { renderBoardBar } from "./boardBar.js";
 import { bindKeys } from "./keys.js";
 import { el, sleep } from "./dom.js";
@@ -165,10 +167,12 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
     measure("board", () => render(canvas, s, highlights(), fx));
   }
 
-  /** Hover only touches the board and the inspector card, never the whole sidebar. */
+  /** Hover only touches the board, the unit card and the threat readout. */
   function drawHover(): void {
     drawBoard();
-    updateInspector(left, s, view());
+    const v = view();
+    updateInspector(left, s, v);
+    updateDanger(right, v);
   }
 
   /** Every order can open or close a lane, so the enemy's reach is re-read after each one. */
@@ -195,7 +199,7 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
       onRetreat: () => confirmWithdraw(),
       onLesson: () => showLesson(),
     });
-    renderLog(right, s);
+    renderRightPanel(right, s, view());
   }
 
   function startAnimation(): void {

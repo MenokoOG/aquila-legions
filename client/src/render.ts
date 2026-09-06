@@ -21,16 +21,16 @@ export interface Highlights {
 }
 
 const TERRAIN_FILL: Record<Terrain, [string, string]> = {
-  plain: ["#c9b878", "#a89a5c"],
-  forest: ["#4f6b3a", "#324a24"],
-  hill: ["#a9865a", "#7f6140"],
-  rough: ["#9a9a8c", "#6f6f64"],
+  plain: ["#3A2A1E", "#211711"],
+  forest: ["#0A5C15", "#032B08"],
+  hill: ["#6B4227", "#3B2416"],
+  rough: ["#3A3A38", "#1E1E1D"],
 };
 
 const FORM_BADGE: Record<string, string> = { line: "", testudo: "T", cuneus: "W", orbis: "O" };
 
 const FLOAT_COLOR: Record<string, string> = {
-  hit: "#ffd9a0", friendly: "#ff9a86", rout: "#fff3b0",
+  hit: "#EFCB63", friendly: "#FF6A5E", rout: "#FFFFF0",
 };
 
 export function sizeCanvas(canvas: HTMLCanvasElement, width: number, height: number): void {
@@ -53,7 +53,7 @@ function hexPath(ctx: CanvasRenderingContext2D, cx: number, cy: number, size = H
 function drawTerrainDetail(ctx: CanvasRenderingContext2D, t: Terrain, cx: number, cy: number, seed: number): void {
   ctx.save();
   if (t === "forest") {
-    ctx.fillStyle = "rgba(20,40,15,0.55)";
+    ctx.fillStyle = "rgba(2,20,4,0.6)";
     for (let i = 0; i < 5; i++) {
       const a = (seed * 7 + i * 73) % 360;
       const rad = 6 + ((seed * 13 + i * 31) % 14);
@@ -62,7 +62,7 @@ function drawTerrainDetail(ctx: CanvasRenderingContext2D, t: Terrain, cx: number
       ctx.beginPath(); ctx.moveTo(x, y - 7); ctx.lineTo(x + 5, y + 4); ctx.lineTo(x - 5, y + 4); ctx.closePath(); ctx.fill();
     }
   } else if (t === "hill") {
-    ctx.strokeStyle = "rgba(70,45,20,0.45)";
+    ctx.strokeStyle = "rgba(239,203,99,0.28)";
     ctx.lineWidth = 1.2;
     for (let i = 0; i < 3; i++) {
       ctx.beginPath();
@@ -70,7 +70,7 @@ function drawTerrainDetail(ctx: CanvasRenderingContext2D, t: Terrain, cx: number
       ctx.stroke();
     }
   } else if (t === "rough") {
-    ctx.fillStyle = "rgba(50,50,45,0.5)";
+    ctx.fillStyle = "rgba(255,255,240,0.14)";
     for (let i = 0; i < 6; i++) {
       const a = (seed * 11 + i * 61) % 360;
       const rad = 4 + ((seed * 5 + i * 17) % 16);
@@ -100,14 +100,14 @@ function pattern(ctx: CanvasRenderingContext2D, kind: "charge" | "arrow"): Canva
   const c = tile.getContext("2d");
   if (!c) return null;
   if (kind === "charge") {
-    c.strokeStyle = "#8f1414";
-    c.lineWidth = 2.4;
+    c.strokeStyle = "#A81414";
+    c.lineWidth = 2.5;
     c.beginPath();
     c.moveTo(-TILE, TILE); c.lineTo(TILE, -TILE);
     c.moveTo(0, TILE * 2); c.lineTo(TILE * 2, 0);
     c.stroke();
   } else {
-    c.fillStyle = "#7a2c6a";
+    c.fillStyle = "#8A5CD6";
     c.beginPath(); c.arc(TILE / 2, TILE / 2, 1.7, 0, Math.PI * 2); c.fill();
   }
   const made = ctx.createPattern(tile, "repeat");
@@ -124,7 +124,7 @@ function drawThreat(ctx: CanvasRenderingContext2D, hx: Hex, cx: number, cy: numb
   if (cell.melee.length) {
     const p = pattern(ctx, "charge");
     if (p) {
-      ctx.globalAlpha = 0.2 + weight * 0.09;
+      ctx.globalAlpha = 0.28 + weight * 0.1;
       hexPath(ctx, cx, cy, HEX_SIZE - 2);
       ctx.fillStyle = p;
       ctx.fill();
@@ -148,12 +148,12 @@ function drawUnit(ctx: CanvasRenderingContext2D, u: BattleUnit, cx: number, cy: 
   const h = 34;
   ctx.save();
   if (selected) {
-    ctx.shadowColor = "#fff3b0";
-    ctx.shadowBlur = 18;
+    ctx.shadowColor = "#DAA520";
+    ctx.shadowBlur = 22;
   }
-  ctx.fillStyle = own ? "#9b1c1c" : "#2f4b6e";
-  ctx.strokeStyle = own ? "#e8c65a" : "#c7d3e0";
-  ctx.lineWidth = 2.2;
+  ctx.fillStyle = own ? "#A81414" : "#4B0082";
+  ctx.strokeStyle = own ? "#DAA520" : "#B48CE8";
+  ctx.lineWidth = 1.8;
   ctx.beginPath();
   if (own && u.tmpl.core) {
     const r = 5;
@@ -171,36 +171,39 @@ function drawUnit(ctx: CanvasRenderingContext2D, u: BattleUnit, cx: number, cy: 
   ctx.shadowBlur = 0;
 
   if (own) {
-    ctx.fillStyle = "#e8c65a";
+    ctx.fillStyle = "#EFCB63";
     ctx.beginPath(); ctx.arc(cx, cy, 3.2, 0, Math.PI * 2); ctx.fill();
   }
 
-  ctx.fillStyle = "#fff8e6";
-  ctx.font = "bold 10px 'Cinzel', 'Georgia', serif";
+  ctx.fillStyle = own ? "#FFFFF0" : "#F0E4FF";
+  ctx.font = "bold 10px 'Cinzel Decorative', Georgia, serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(u.tmpl.glyph, cx, cy - 7);
 
   if (u.pila > 0) {
-    ctx.strokeStyle = "#fff8e6";
+    ctx.strokeStyle = "#EFCB63";
     ctx.lineWidth = 1.4;
     ctx.beginPath(); ctx.moveTo(cx - 8, cy + 11); ctx.lineTo(cx + 8, cy + 3); ctx.stroke();
   }
 
   const badge = FORM_BADGE[u.formation] ?? "";
   if (badge) {
-    ctx.fillStyle = "#e8c65a";
+    ctx.fillStyle = "#EFCB63";
     ctx.beginPath(); ctx.arc(cx + 14, cy - 15, 7.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = "#2a1a0a";
-    ctx.font = "bold 9px 'Cinzel', serif";
+    ctx.fillStyle = "#1A0F06";
+    ctx.font = "bold 9px 'Cinzel Decorative', Georgia, serif";
     ctx.fillText(badge, cx + 14, cy - 15);
   }
 
   const frac = u.men / u.maxMen;
   const barW = 32;
-  ctx.fillStyle = "rgba(0,0,0,0.55)";
+  ctx.fillStyle = "rgba(0,0,0,0.75)";
   ctx.fillRect(cx - barW / 2, cy + h / 2 + 2, barW, 5);
-  ctx.fillStyle = frac > 0.5 ? "#7ccf6a" : frac > 0.3 ? "#e6c04a" : "#e0563b";
+  ctx.strokeStyle = "rgba(218,165,32,0.28)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(cx - barW / 2, cy + h / 2 + 2, barW, 5);
+  ctx.fillStyle = frac > 0.5 ? "#E97451" : frac > 0.33 ? "#DAA520" : "#A81414";
   ctx.fillRect(cx - barW / 2, cy + h / 2 + 2, barW * frac, 5);
 
   // Two shades of spent: dark once the unit has attacked and is finished, lighter
@@ -228,7 +231,7 @@ function ring(ctx: CanvasRenderingContext2D, cx: number, cy: number, color: stri
 function drawPath(ctx: CanvasRenderingContext2D, from: Hex, path: Hex[]): void {
   if (!path.length) return;
   ctx.save();
-  ctx.strokeStyle = "rgba(255,243,176,0.9)";
+  ctx.strokeStyle = "#EFCB63";
   ctx.lineWidth = 3;
   ctx.setLineDash([5, 6]);
   ctx.lineCap = "round";
@@ -243,7 +246,7 @@ function drawPath(ctx: CanvasRenderingContext2D, from: Hex, path: Hex[]): void {
   ctx.setLineDash([]);
 
   const end = toPixel(path[path.length - 1]!);
-  ctx.fillStyle = "rgba(255,243,176,0.9)";
+  ctx.fillStyle = "#EFCB63";
   ctx.beginPath(); ctx.arc(end.x, end.y, 5, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 }
@@ -252,13 +255,13 @@ function drawFloaters(ctx: CanvasRenderingContext2D, fx: Effects): void {
   ctx.save();
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = "bold 17px 'Cinzel', Georgia, serif";
+  ctx.font = "bold 17px 'Cinzel Decorative', Georgia, serif";
   for (const { f, age } of fx.alive()) {
     const { x, y } = toPixel(f.at);
     const rise = 6 + age * 30;
     ctx.globalAlpha = age < 0.7 ? 1 : 1 - (age - 0.7) / 0.3;
     ctx.lineWidth = 3;
-    ctx.strokeStyle = "rgba(20,12,4,0.85)";
+    ctx.strokeStyle = "rgba(6,4,3,0.9)";
     ctx.strokeText(f.text, x, y - 26 - rise);
     ctx.fillStyle = FLOAT_COLOR[f.tone] ?? "#fff";
     ctx.fillText(f.text, x, y - 26 - rise);
@@ -309,8 +312,8 @@ function terrainLayer(s: BattleState, dpr: number): HTMLCanvasElement {
         hexPath(lc, x, y);
         lc.fillStyle = g;
         lc.fill();
-        lc.strokeStyle = "rgba(40,30,10,0.45)";
-        lc.lineWidth = 1.2;
+        lc.strokeStyle = "rgba(218,165,32,0.16)";
+        lc.lineWidth = 1;
         lc.stroke();
         drawTerrainDetail(lc, t, x, y, q * 31 + r * 17);
       }
@@ -345,12 +348,15 @@ export function render(canvas: HTMLCanvasElement, s: BattleState, hl: Highlights
       if (threatened && hl.threat) drawThreat(ctx, hx, x, y, hl.threat);
       if (reach) {
         hexPath(ctx, x, y, HEX_SIZE - 2);
-        ctx.fillStyle = "rgba(255,225,120,0.28)";
+        ctx.fillStyle = "rgba(218,165,32,0.30)";
         ctx.fill();
+        ctx.strokeStyle = "rgba(239,203,99,0.75)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
       }
       if (isHover) {
         hexPath(ctx, x, y, HEX_SIZE - 1);
-        ctx.strokeStyle = "rgba(255,255,255,0.7)";
+        ctx.strokeStyle = "#FFFFF0";
         ctx.lineWidth = 2;
         ctx.stroke();
       }
@@ -362,9 +368,9 @@ export function render(canvas: HTMLCanvasElement, s: BattleState, hl: Highlights
   for (const u of s.units) {
     const { x, y } = toPixel(u.at);
     const k = key(u.at);
-    if (hl.melee.has(k)) ring(ctx, x, y, "#ff5a3c");
-    if (hl.ranged.has(k)) ring(ctx, x, y, "#ffa03c");
-    if (hl.pila.has(k)) ring(ctx, x, y, "#ffe45c", true);
+    if (hl.melee.has(k)) ring(ctx, x, y, "#FF6A5E");
+    if (hl.ranged.has(k)) ring(ctx, x, y, "#E97451");
+    if (hl.pila.has(k)) ring(ctx, x, y, "#EFCB63", true);
     drawUnit(ctx, u, x, y, hl.selected?.id === u.id);
   }
 

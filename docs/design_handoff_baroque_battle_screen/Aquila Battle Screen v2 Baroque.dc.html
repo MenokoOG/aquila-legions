@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #0D0D0D; color: #F7E7CE; }
+    * { box-sizing: border-box; }
+    a { color: #DAA520; text-underline-offset: 3px; }
+    a:hover { color: #E9C25A; }
+    ::selection { background: rgba(218,165,32,0.32); }
+    :focus-visible { outline: 2px solid #DAA520; outline-offset: 2px; }
+    @keyframes emberIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  </style>
+</helmet>
+
+<div style="--crimson:#8B0000;--crimson-lit:#A81414;--gold:#DAA520;--gold-lit:#EFCB63;--ink:#0D0D0D;--ivory:#FFFFF0;--champagne:#F7E7CE;--purple:#4B0082;--emerald:#046307;--sienna:#E97451;--panel:#17100E;--panel-2:#1E1512;--rule:rgba(218,165,32,0.30);--rule-soft:rgba(218,165,32,0.14);font-family:Cinzel,Georgia,serif;color:var(--champagne);min-height:100vh;padding:24px 24px 64px;background:radial-gradient(900px 520px at 8% -8%, rgba(218,165,32,0.20), transparent 62%),radial-gradient(1000px 620px at 104% 108%, rgba(139,0,0,0.34), transparent 62%),radial-gradient(700px 700px at 62% 40%, rgba(75,0,130,0.16), transparent 70%),#0D0D0D">
+<div style="max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:24px">
+
+  <header style="position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:24px;padding:16px 24px;border-radius:8px;border:1px solid var(--rule);background:linear-gradient(180deg,#1B0F0E,#120A09);box-shadow:0 18px 44px rgba(0,0,0,0.55),inset 0 1px 0 rgba(218,165,32,0.18)">
+    <div style="display:flex;align-items:center;gap:14px;padding-right:24px;border-right:1px solid var(--rule-soft)">
+      <span style="display:grid;place-items:center;width:44px;height:44px;border-radius:8px;background:linear-gradient(160deg,var(--crimson-lit),#570000);color:var(--gold-lit);border:1px solid var(--gold);font-family:'Cinzel Decorative',serif;font-weight:700;font-size:18px;box-shadow:inset 0 0 12px rgba(0,0,0,0.6)">A</span>
+      <span style="font-family:'Cinzel Decorative',serif;font-weight:700;font-size:19px;letter-spacing:0.14em;color:var(--gold-lit)">AQVILA</span>
+    </div>
+    <div style="min-width:0">
+      <div style="font-family:'Cinzel Decorative',serif;font-weight:700;font-size:23px;line-height:1.15;color:var(--ivory)">Under the Arrows</div>
+      <div style="font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(247,231,206,0.62)">101 AD · The Iron Gates Pass · Teaches the Testudo</div>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:8px;border:1px solid var(--rule);background:rgba(218,165,32,0.07);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.06em;color:var(--gold-lit)">TVRN 4 / 14</span>
+      <span style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:8px;border:1px solid rgba(168,20,20,0.7);background:linear-gradient(180deg,rgba(168,20,20,0.35),rgba(139,0,0,0.2));font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--ivory)">Rome Moves</span>
+      <button type="button" style="cursor:pointer;padding:8px 16px;border-radius:8px;border:1.5px solid var(--gold);background:transparent;color:var(--gold-lit);font-family:Cinzel,serif;font-weight:600;font-size:12.5px;letter-spacing:0.08em;transition:background 200ms ease,box-shadow 200ms ease" style-hover="background:rgba(218,165,32,0.14);box-shadow:0 4px 16px rgba(218,165,32,0.18)">BRIEFING · L</button>
+    </div>
+    <div style="position:absolute;left:24px;right:24px;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0.55"></div>
+  </header>
+
+  <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">
+
+    <aside style="display:flex;flex-direction:column;gap:16px;min-width:0;flex:1 1 300px;max-width:344px">
+      <section style="position:relative;border-radius:8px;border:1px solid var(--rule);background:linear-gradient(180deg,var(--panel),#120C0B);box-shadow:0 14px 38px rgba(0,0,0,0.5),inset 0 1px 0 rgba(218,165,32,0.12);padding:20px;display:flex;flex-direction:column;gap:18px">
+        <div style="display:flex;align-items:flex-start;gap:14px">
+          <span style="display:grid;place-items:center;width:48px;height:52px;flex:none;border-radius:8px;background:linear-gradient(160deg,var(--crimson-lit),#4F0000);border:1px solid var(--gold);color:var(--gold-lit);font-family:'Cinzel Decorative',serif;font-weight:700;font-size:15px;box-shadow:inset 0 0 14px rgba(0,0,0,0.65)">IX</span>
+          <div style="min-width:0">
+            <div style="font-family:'Cinzel Decorative',serif;font-weight:700;font-size:20px;line-height:1.15;color:var(--ivory)">Coh. IX</div>
+            <div style="font-size:12px;font-style:italic;color:rgba(247,231,206,0.6)">Cohors Legionis · line infantry</div>
+          </div>
+          <span style="margin-left:auto;flex:none;padding:4px 10px;border-radius:8px;border:1px solid var(--rule);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold-lit)">Held</span>
+        </div>
+
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px">
+            <span style="font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold)">Strength</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ivory)">432 / 480</span>
+          </div>
+          <div style="height:10px;border-radius:8px;background:#0B0807;border:1px solid var(--rule-soft);overflow:hidden">
+            <div style="width:90%;height:100%;background:linear-gradient(90deg,#6E1A02,var(--sienna));box-shadow:0 0 14px rgba(233,116,81,0.45)"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:rgba(247,231,206,0.55);margin-top:6px">
+            <span>BREAKS AT 120</span>
+            <span>HILL +1 DEF</span>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;text-align:center">
+          <div style="border-radius:8px;border:1px solid var(--rule-soft);background:var(--panel-2);padding:9px 2px">
+            <div style="font-size:9.5px;letter-spacing:0.16em;color:var(--gold)">ATK</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:19px;color:var(--ivory)">9</div>
+          </div>
+          <div style="border-radius:8px;border:1px solid var(--rule-soft);background:var(--panel-2);padding:9px 2px">
+            <div style="font-size:9.5px;letter-spacing:0.16em;color:var(--gold)">DEF</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:19px;color:var(--ivory)">14</div>
+          </div>
+          <div style="border-radius:8px;border:1px solid var(--rule-soft);background:var(--panel-2);padding:9px 2px">
+            <div style="font-size:9.5px;letter-spacing:0.16em;color:var(--gold)">MOVE</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:19px;color:var(--ivory)">{{ moveValue }}</div>
+          </div>
+          <div style="border-radius:8px;border:1px solid rgba(218,165,32,0.5);background:linear-gradient(180deg,rgba(218,165,32,0.18),rgba(218,165,32,0.06));padding:9px 2px">
+            <div style="font-size:9.5px;letter-spacing:0.16em;color:var(--gold-lit)">PILA</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:19px;color:var(--gold-lit)">1</div>
+          </div>
+        </div>
+
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span style="font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold)">Formation</span>
+            <span style="flex:1;height:1px;background:linear-gradient(90deg,var(--rule),transparent)"></span>
+            <span style="color:var(--gold);font-size:9px">◆</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px">
+            <sc-for list="{{ formations }}" as="f" hint-placeholder-count="4">
+              <button type="button" onClick="{{ f.pick }}" style="{{ f.css }}" style-hover="filter:brightness(1.15)">{{ f.name }}</button>
+            </sc-for>
+          </div>
+          <p style="font-size:12.5px;line-height:1.6;color:rgba(247,231,206,0.75);margin:12px 0 0">{{ formationNote }}</p>
+        </div>
+
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span style="font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold)">Then strike with</span>
+            <span style="flex:1;height:1px;background:linear-gradient(90deg,var(--rule),transparent)"></span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <button type="button" onClick="{{ pickGladius }}" style="{{ gladiusCss }}">GLADIVS · A</button>
+            <button type="button" onClick="{{ pickPila }}" style="{{ pilaCss }}">PILA · P</button>
+          </div>
+        </div>
+      </section>
+
+      <section style="{{ forecastCss }}">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-family:'Cinzel Decorative',serif;font-weight:700;font-size:15px;color:var(--ivory)">{{ forecastTitle }}</span>
+          <span style="flex:1;height:1px;background:linear-gradient(90deg,var(--rule),transparent)"></span>
+          <span style="font-size:10.5px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,231,206,0.6)">vs. Warband</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+          <div style="border-radius:8px;border:1px solid var(--rule-soft);background:rgba(13,13,13,0.55);padding:10px 12px">
+            <div style="font-size:9.5px;letter-spacing:0.16em;color:var(--gold)">THEY LOSE</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:20px;color:var(--ivory);white-space:nowrap">{{ dealt }}</div>
+          </div>
+          <div style="border-radius:8px;border:1px solid var(--rule-soft);background:rgba(13,13,13,0.55);padding:10px 12px">
+            <div style="font-size:9.5px;letter-spacing:0.16em;color:var(--gold)">YOU LOSE</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:20px;color:var(--ivory);white-space:nowrap">{{ taken }}</div>
+          </div>
+        </div>
+        <p style="font-size:12.5px;line-height:1.6;margin:12px 0 0;color:{{ forecastNoteColor }}">{{ forecastNote }}</p>
+      </section>
+
+      <section style="border-radius:8px;border:1px solid var(--rule);background:linear-gradient(180deg,var(--panel),#120C0B);box-shadow:0 14px 38px rgba(0,0,0,0.5);padding:18px 20px 20px">
+        <button type="button" style="width:100%;cursor:pointer;padding:14px;border-radius:8px;border:1px solid var(--gold);background:linear-gradient(180deg,var(--crimson-lit),#6E0000);color:var(--ivory);font-family:'Cinzel Decorative',serif;font-weight:700;font-size:15px;letter-spacing:0.1em;box-shadow:0 8px 22px rgba(139,0,0,0.5),inset 0 1px 0 rgba(255,255,240,0.14);transition:transform 200ms ease,box-shadow 200ms ease" style-hover="box-shadow:0 12px 30px rgba(139,0,0,0.62),inset 0 1px 0 rgba(255,255,240,0.2)" style-active="transform:translateY(1px)">END TVRN ⏎</button>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px">
+          <button type="button" style="cursor:pointer;padding:9px 4px;border-radius:8px;border:1.5px solid var(--rule);background:transparent;color:var(--champagne);font-family:Cinzel,serif;font-size:11.5px;letter-spacing:0.06em" style-hover="background:rgba(218,165,32,0.12)">UNDO · U</button>
+          <button type="button" style="cursor:pointer;padding:9px 4px;border-radius:8px;border:1.5px solid var(--rule);background:transparent;color:var(--champagne);font-family:Cinzel,serif;font-size:11.5px;letter-spacing:0.06em" style-hover="background:rgba(218,165,32,0.12)">RESTART</button>
+          <button type="button" style="cursor:pointer;padding:9px 4px;border-radius:8px;border:1.5px solid var(--rule);background:transparent;color:var(--champagne);font-family:Cinzel,serif;font-size:11.5px;letter-spacing:0.06em" style-hover="background:rgba(218,165,32,0.12)">WITHDRAW</button>
+        </div>
+        <p style="font-family:'JetBrains Mono',monospace;font-size:10.5px;line-height:1.7;color:rgba(247,231,206,0.78);margin:12px 0 0">TAB next cohort · 1-4 formation · T enemy reach · ESC deselect</p>
+      </section>
+    </aside>
+
+    <section style="min-width:0;display:flex;flex-direction:column;gap:16px;flex:100 1 560px">
+      <div ref="{{ frameRef }}" style="position:relative;border-radius:8px;border:1px solid var(--rule);background:radial-gradient(700px 380px at 50% 0%, #2A1C14, #120C0A 70%);padding:18px;box-shadow:0 24px 60px rgba(0,0,0,0.62),inset 0 0 90px rgba(0,0,0,0.7);overflow:hidden">
+        <div style="{{ boardCss }}">
+          <sc-for list="{{ hexes }}" as="h" hint-placeholder-count="140">
+            <div style="{{ h.css }}"></div>
+          </sc-for>
+          <sc-for list="{{ overlays }}" as="o" hint-placeholder-count="14">
+            <div style="{{ o.css }}"></div>
+          </sc-for>
+          <div style="{{ pathCss }}"></div>
+          <sc-for list="{{ units }}" as="u" hint-placeholder-count="8">
+            <div style="{{ u.wrapCss }}">
+              <div style="{{ u.shapeCss }}">{{ u.glyph }}</div>
+              <div style="{{ u.barCss }}"><div style="{{ u.fillCss }}"></div></div>
+              <div style="{{ u.badgeCss }}">{{ u.badge }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="{{ legendCss }}">
+        <button type="button" onClick="{{ toggleReach }}" style="{{ reachBtnCss }}">
+          <span style="{{ reachDotCss }}"></span>{{ reachLabel }}
+        </button>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:rgba(247,231,206,0.78)">{{ reachCount }}</span>
+        <div style="margin-left:auto;display:flex;flex-wrap:wrap;gap:8px 20px">
+          <span style="display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:0.06em;color:rgba(247,231,206,0.7)"><span style="width:15px;height:15px;border-radius:4px;background:rgba(218,165,32,0.28);box-shadow:inset 0 0 0 1.5px var(--gold)"></span>CAN MOVE</span>
+          <span style="display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:0.06em;color:rgba(247,231,206,0.7)"><span style="width:15px;height:15px;border-radius:4px;background:#241A15;box-shadow:inset 0 0 0 2px #FF6A5E"></span>MELEE</span>
+          <span style="display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:0.06em;color:rgba(247,231,206,0.7)"><span style="width:15px;height:15px;border-radius:4px;background:#241A15;box-shadow:inset 0 0 0 2px var(--sienna)"></span>RANGED</span>
+          <span style="display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:0.06em;color:rgba(247,231,206,0.7)"><span style="width:15px;height:15px;border-radius:4px;background:repeating-linear-gradient(45deg,var(--crimson-lit) 0 2px,transparent 2px 5px),#241A15"></span>CHARGE</span>
+          <span style="display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:0.06em;color:rgba(247,231,206,0.7)"><span style="width:15px;height:15px;border-radius:4px;background:radial-gradient(circle at 4px 4px,#8A5CD6 1.6px,transparent 1.8px) 0 0/7px 7px,#241A15"></span>BOW</span>
+        </div>
+      </div>
+    </section>
+
+    <aside style="display:flex;flex-direction:column;gap:16px;min-width:0;flex:1 1 280px;max-width:330px">
+      <section style="border-radius:8px;border:1px solid var(--rule);background:linear-gradient(180deg,var(--panel),#120C0B);box-shadow:0 14px 38px rgba(0,0,0,0.5);padding:20px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <span style="font-family:'Cinzel Decorative',serif;font-weight:700;font-size:16px;color:var(--ivory)">Objectives</span>
+          <span style="flex:1;height:1px;background:linear-gradient(90deg,var(--rule),transparent)"></span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold)">125/225</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:12px;align-items:flex-start;border-radius:8px;border:1px solid var(--rule-soft);border-left:3px solid rgba(218,165,32,0.35);background:var(--panel-2);padding:11px 13px">
+            <span style="display:grid;place-items:center;width:20px;height:20px;flex:none;border-radius:8px;border:1px solid var(--rule-soft);color:rgba(247,231,206,0.72);font-size:11px">·</span>
+            <div style="min-width:0;flex:1">
+              <div style="font-size:13px;line-height:1.45;color:var(--champagne)">Clear the pass</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:rgba(247,231,206,0.78);margin-top:2px">4 OF 4 ENEMIES STANDING</div>
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold)">+100</span>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;border-radius:8px;border:1px solid rgba(4,99,7,0.55);border-left:3px solid var(--emerald);background:linear-gradient(180deg,rgba(4,99,7,0.22),rgba(4,99,7,0.06));padding:11px 13px">
+            <span style="display:grid;place-items:center;width:20px;height:20px;flex:none;border-radius:8px;background:var(--emerald);color:var(--ivory);font-size:11px">✓</span>
+            <div style="min-width:0;flex:1">
+              <div style="font-size:13px;line-height:1.45;color:var(--ivory)">Spend at least 3 cohort-turns in Testudo while under fire</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:rgba(255,255,240,0.7);margin-top:2px">4 OF 3</div>
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold-lit)">+50</span>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;border-radius:8px;border:1px solid var(--rule-soft);border-left:3px solid rgba(218,165,32,0.35);background:var(--panel-2);padding:11px 13px">
+            <span style="display:grid;place-items:center;width:20px;height:20px;flex:none;border-radius:8px;border:1px solid var(--rule-soft);color:rgba(247,231,206,0.72);font-size:11px">·</span>
+            <div style="min-width:0;flex:1">
+              <div style="font-size:13px;line-height:1.45;color:var(--champagne)">Lose fewer than 150 men to arrows</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:rgba(247,231,206,0.78);margin-top:2px">86 SO FAR</div>
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold)">+75</span>
+          </div>
+        </div>
+      </section>
+
+      <section style="border-radius:8px;border:1px solid rgba(75,0,130,0.6);background:linear-gradient(180deg,rgba(75,0,130,0.3),rgba(29,10,44,0.55));box-shadow:0 14px 38px rgba(0,0,0,0.45);padding:16px 18px">
+        <div style="font-family:'Cinzel Decorative',serif;font-weight:700;font-size:14px;color:var(--ivory);margin-bottom:10px">Coh. IX — Under Threat</div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--champagne);margin-top:6px">
+          <span style="width:15px;height:15px;flex:none;border-radius:4px;background:repeating-linear-gradient(45deg,var(--crimson-lit) 0 2px,transparent 2px 5px),#1A0F16"></span>Charged by 2 Warbands
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--champagne);margin-top:6px">
+          <span style="width:15px;height:15px;flex:none;border-radius:4px;background:radial-gradient(circle at 4px 4px,#8A5CD6 1.6px,transparent 1.8px) 0 0/7px 7px,#1A0F16"></span>Shot at by Dacian Archers
+        </div>
+      </section>
+
+      <section style="border-radius:8px;border:1px solid var(--rule);background:linear-gradient(180deg,var(--panel),#120C0B);box-shadow:0 14px 38px rgba(0,0,0,0.5);padding:20px;min-width:0">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <span style="font-family:'Cinzel Decorative',serif;font-weight:700;font-size:16px;color:var(--ivory)">Dispatches</span>
+          <span style="flex:1;height:1px;background:linear-gradient(90deg,var(--rule),transparent)"></span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;max-height:360px;overflow:auto">
+          <sc-for list="{{ log }}" as="l" hint-placeholder-count="8">
+            <div style="{{ l.css }}">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gold);flex:none;padding-top:2px">{{ l.turn }}</span>
+              <span style="min-width:0">{{ l.text }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showEnemyReach&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Board&quot;},&quot;showLegend&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Board&quot;},&quot;boardScale&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1,&quot;min&quot;:0.8,&quot;max&quot;:1.3,&quot;step&quot;:0.05,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Board&quot;}}">
+const W = 14, H = 10;
+const PITCH_X = 54, PITCH_Y = 46, HEX_W = 52, HEX_H = 60;
+const CLIP = "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
+
+const TERRAIN = {
+  forest: [[5,0],[6,0],[7,0],[5,9],[6,9],[7,9]],
+  hill: [[6,1],[7,1],[8,1],[9,1],[6,8],[7,8],[8,8],[9,8],[8,2],[8,7]],
+  rough: [[4,1],[4,8],[10,2],[10,7]],
+};
+
+const FILL = {
+  plain: "radial-gradient(circle at 34% 26%, #3A2A1E, #211711 78%)",
+  hill: "radial-gradient(circle at 34% 26%, #6B4227, #3B2416 78%)",
+  forest: "radial-gradient(circle at 34% 26%, #0A5C15, #032B08 78%)",
+  rough: "radial-gradient(circle at 34% 26%, #3A3A38, #1E1E1D 78%)",
+};
+
+const UNITS = [
+  { q:5, r:3, side:"player", glyph:"VII", badge:"T", frac:0.86 },
+  { q:4, r:4, side:"player", glyph:"IX", badge:"T", frac:0.90, core:true },
+  { q:5, r:5, side:"player", glyph:"VIII", badge:"T", frac:0.72 },
+  { q:3, r:7, side:"player", glyph:"ALA", badge:"", frac:1, mounted:true },
+  { q:7, r:1, side:"enemy", glyph:"ARC", badge:"", frac:1 },
+  { q:7, r:8, side:"enemy", glyph:"ARC", badge:"", frac:0.8 },
+  { q:7, r:4, side:"enemy", glyph:"WAR", badge:"", frac:1 },
+  { q:11, r:5, side:"enemy", glyph:"WAR", badge:"", frac:0.65 },
+];
+
+const REACHABLE = [[4,3],[4,5],[5,4],[3,3],[3,4],[3,5],[4,2],[4,6],[6,4],[6,3],[6,5]];
+const CHARGE = [[10,3],[10,4],[10,5],[10,6],[11,3],[11,6],[12,4],[12,5],[10,7],[6,3],[6,4],[6,5],[7,3],[7,5],[8,4]];
+const BOW = [[6,2],[7,2],[6,3],[7,3],[6,7],[7,7],[6,6],[7,6],[8,3],[8,6],[5,2],[5,7]];
+
+const LOG = [
+  { turn:"T4", side:"system", text:"Coh. IX locks shields on the hill." },
+  { turn:"T4", side:"player", text:"Coh. VII advances into the pass, 2 hexes." },
+  { turn:"T3", side:"enemy", text:"Dacian Archers volley at Coh. VIII — 18 men lost." },
+  { turn:"T3", side:"player", text:"Coh. VIII forms Testudo." },
+  { turn:"T3", side:"enemy", text:"Dacian Archers volley at Coh. VII — 6 men lost." },
+  { turn:"T2", side:"player", text:"Ala I Thracum screens the left flank." },
+  { turn:"T2", side:"system", text:"Bow range reaches the mouth of the pass." },
+  { turn:"T1", side:"system", text:"The column enters the Iron Gates." },
+];
+
+const terrainOf = (() => {
+  const m = new Map();
+  for (const [kind, cells] of Object.entries(TERRAIN)) for (const [q, r] of cells) m.set(q + "," + r, kind);
+  return (q, r) => m.get(q + "," + r) || "plain";
+})();
+
+const pos = (q, r) => ({ x: q * PITCH_X + (r % 2 ? PITCH_X / 2 : 0), y: r * PITCH_Y });
+const center = (q, r) => { const p = pos(q, r); return { x: p.x + HEX_W / 2, y: p.y + HEX_H / 2 }; };
+const has = (list, q, r) => list.some(([a, b]) => a === q && b === r);
+
+class Component extends DCLogic {
+  state = { formation: "testudo", mode: "gladius", reach: true, avail: 0 };
+  frame = React.createRef();
+
+  componentDidMount() {
+    const measure = () => {
+      const n = this.frame.current;
+      if (!n) return;
+      const w = n.clientWidth - 36;
+      if (Math.abs(w - this.state.avail) > 1) this.setState({ avail: w });
+    };
+    measure();
+    this.ro = new ResizeObserver(measure);
+    if (this.frame.current) this.ro.observe(this.frame.current);
+  }
+
+  componentWillUnmount() { if (this.ro) this.ro.disconnect(); }
+
+  renderVals() {
+    const showReach = (this.props.showEnemyReach ?? true) && this.state.reach;
+    const boardW = (W + 0.5) * PITCH_X, boardH = (H - 1) * PITCH_Y + HEX_H;
+    const fit = this.state.avail > 0 ? Math.min(1.25, this.state.avail / boardW) : 1;
+    const scale = fit * (this.props.boardScale ?? 1);
+
+    const hexes = [];
+    for (let r = 0; r < H; r++) for (let q = 0; q < W; q++) {
+      const t = terrainOf(q, r), p = pos(q, r);
+      const layers = [];
+      if (showReach && has(BOW, q, r)) layers.push("radial-gradient(circle at 4px 5px, #8A5CD6 1.7px, transparent 1.9px) 0 0/9px 9px");
+      if (showReach && has(CHARGE, q, r)) layers.push("repeating-linear-gradient(45deg, rgba(168,20,20,0.85) 0 2.5px, transparent 2.5px 7px)");
+      layers.push(FILL[t]);
+      hexes.push({ css: `position:absolute;left:${p.x}px;top:${p.y}px;width:${HEX_W}px;height:${HEX_H}px;clip-path:${CLIP};background:${layers.join(",")};box-shadow:inset 0 0 0 1px rgba(218,165,32,0.16), inset 0 0 14px rgba(0,0,0,0.55)` });
+    }
+
+    const cell = (q, r, extra) => {
+      const p = pos(q, r);
+      return { css: `position:absolute;left:${p.x}px;top:${p.y}px;width:${HEX_W}px;height:${HEX_H}px;clip-path:${CLIP};pointer-events:none;${extra}` };
+    };
+
+    const overlays = REACHABLE.map(([q, r]) =>
+      cell(q, r, "background:radial-gradient(circle at 50% 45%, rgba(218,165,32,0.34), rgba(218,165,32,0.12));box-shadow:inset 0 0 0 2px rgba(239,203,99,0.75)"));
+    overlays.push(cell(6, 4, "background:radial-gradient(circle at 50% 45%, rgba(255,255,240,0.34), rgba(218,165,32,0.2));box-shadow:inset 0 0 0 2.5px #FFFFF0"));
+    overlays.push(cell(7, 4, "box-shadow:inset 0 0 0 3px #FF6A5E, inset 0 0 22px rgba(255,106,94,0.4)"));
+
+    const a = center(4, 4), b = center(5, 4), c = center(6, 4);
+    const dot = (x, y, rad) => `radial-gradient(circle at ${x}px ${y}px, #EFCB63 ${rad}px, transparent ${rad + 1}px)`;
+    const pathCss = `position:absolute;left:0;top:0;width:${boardW}px;height:${boardH}px;pointer-events:none;background:${[
+      dot(a.x, a.y, 3), dot((a.x + b.x) / 2, (a.y + b.y) / 2, 3), dot(b.x, b.y, 3),
+      dot((b.x + c.x) / 2, (b.y + c.y) / 2, 3), dot(c.x, c.y, 6),
+    ].join(",")}`;
+
+    const units = UNITS.map((u) => {
+      const own = u.side === "player";
+      const p = center(u.q, u.r);
+      const size = 36;
+      const shape = u.mounted
+        ? "clip-path:polygon(50% 3%, 97% 93%, 3% 93%)"
+        : own ? "border-radius:6px" : "border-radius:999px";
+      const bg = own
+        ? "linear-gradient(160deg, #A81414, #5C0000)"
+        : "linear-gradient(160deg, #5E1096, #2C0050)";
+      const rim = own ? "#DAA520" : "#B48CE8";
+      const bar = u.frac > 0.5 ? "#E97451" : u.frac > 0.3 ? "#DAA520" : "#A81414";
+      const glow = u.core
+        ? "box-shadow:0 0 0 3px rgba(218,165,32,0.55), 0 0 22px rgba(218,165,32,0.5), inset 0 0 12px rgba(0,0,0,0.6)"
+        : "box-shadow:0 6px 14px rgba(0,0,0,0.6), inset 0 0 12px rgba(0,0,0,0.55)";
+      return {
+        glyph: u.glyph,
+        badge: u.badge,
+        wrapCss: `position:absolute;left:${p.x - size / 2}px;top:${p.y - size / 2 - 3}px;width:${size}px;height:${size}px`,
+        shapeCss: `width:${size}px;height:${size}px;display:grid;place-items:center;background:${bg};color:${own ? "#FFFFF0" : "#F0E4FF"};font-family:'Cinzel Decorative',serif;font-weight:700;font-size:${u.glyph.length > 2 ? 8.5 : 11}px;letter-spacing:0.04em;${shape};outline:1.5px solid ${rim};outline-offset:-1.5px;${glow}`,
+        barCss: "position:absolute;left:2px;right:2px;bottom:-7px;height:5px;border-radius:3px;background:rgba(0,0,0,0.75);border:1px solid rgba(218,165,32,0.28);overflow:hidden",
+        fillCss: `width:${Math.round(u.frac * 100)}%;height:100%;background:${bar}`,
+        badgeCss: u.badge
+          ? "position:absolute;right:-9px;top:-9px;width:19px;height:19px;border-radius:8px;display:grid;place-items:center;background:linear-gradient(160deg,#EFCB63,#B8860B);color:#1A0F06;font-family:'Cinzel Decorative',serif;font-weight:700;font-size:10px;box-shadow:0 3px 8px rgba(0,0,0,0.6)"
+          : "display:none",
+      };
+    });
+
+    const info = {
+      line: { name: "LINE", note: "Line — even attack and defense, full movement. The default order of march." },
+      testudo: { name: "TEST.", note: "Testudo — missile damage cut by three quarters, movement down to one hex, attack blunted." },
+      cuneus: { name: "CVN.", note: "Cuneus — +40% attack, defense given up. For the unit you mean to destroy." },
+      orbis: { name: "ORBIS", note: "Orbis — cannot be flanked, movement halved. For a cohort that is surrounded." },
+    };
+    const formations = Object.keys(info).map((k) => {
+      const on = this.state.formation === k;
+      return {
+        name: info[k].name,
+        pick: () => this.setState({ formation: k }),
+        css: `cursor:pointer;font-family:Cinzel,serif;font-weight:600;font-size:11px;letter-spacing:0.06em;padding:9px 2px;border-radius:8px;transition:background 200ms ease;border:1px solid ${on ? "#DAA520" : "rgba(218,165,32,0.22)"};background:${on ? "linear-gradient(180deg,#DAA520,#9A6F0C)" : "#1E1512"};color:${on ? "#1A0F06" : "#F7E7CE"}`,
+      };
+    });
+
+    const modeCss = (on) => `cursor:pointer;font-family:Cinzel,serif;font-weight:600;font-size:12.5px;letter-spacing:0.08em;padding:11px 4px;border-radius:8px;transition:background 200ms ease;border:1px solid ${on ? "#DAA520" : "rgba(218,165,32,0.22)"};background:${on ? "linear-gradient(180deg,#A81414,#6E0000)" : "#1E1512"};color:${on ? "#FFFFF0" : "#F7E7CE"}`;
+
+    const pila = this.state.mode === "pila";
+    const risky = this.state.formation === "cuneus" || this.state.formation === "orbis";
+
+    return {
+      hexes, overlays, units, pathCss,
+      frameRef: this.frame,
+      boardCss: `position:relative;width:${boardW}px;height:${boardH}px;transform:scale(${scale});transform-origin:top left;margin-bottom:${(scale - 1) * boardH}px`,
+      moveValue: this.state.formation === "testudo" ? 1 : this.state.formation === "orbis" ? 2 : 4,
+      formations,
+      formationNote: info[this.state.formation].note,
+      pickGladius: () => this.setState({ mode: "gladius" }),
+      pickPila: () => this.setState({ mode: "pila" }),
+      gladiusCss: modeCss(!pila),
+      pilaCss: modeCss(pila),
+      forecastTitle: pila ? "Pila Volley" : "Charge Forecast",
+      dealt: pila ? "90–140" : "60–95",
+      taken: pila ? "none" : "25–45",
+      forecastNote: pila
+        ? "No retaliation. They may break."
+        : risky
+          ? "They may break — and this cohort could break in the counter-attack."
+          : "They hold, but the line bends.",
+      forecastNoteColor: risky && !pila ? "#F0A08C" : "rgba(247,231,206,0.75)",
+      forecastCss: `border-radius:8px;padding:18px 20px;box-shadow:0 14px 38px rgba(0,0,0,0.5);border:1px solid ${risky && !pila ? "rgba(168,20,20,0.85)" : "var(--rule)"};background:${risky && !pila ? "linear-gradient(180deg,rgba(139,0,0,0.42),rgba(31,8,8,0.72))" : "linear-gradient(180deg,#1B120F,#120C0B)"}`,
+      toggleReach: () => this.setState({ reach: !this.state.reach }),
+      reachLabel: showReach ? "ENEMY REACH ON" : "ENEMY REACH OFF",
+      reachCount: showReach ? (CHARGE.length + BOW.length) + " HEXES THREATENED" : "PRESS T TO SHOW",
+      reachBtnCss: `display:inline-flex;align-items:center;gap:9px;cursor:pointer;font-family:Cinzel,serif;font-weight:600;font-size:11.5px;letter-spacing:0.08em;padding:8px 16px;border-radius:8px;transition:background 200ms ease;border:1px solid ${showReach ? "#DAA520" : "rgba(218,165,32,0.22)"};background:${showReach ? "rgba(218,165,32,0.16)" : "transparent"};color:${showReach ? "#EFCB63" : "#F7E7CE"}`,
+      reachDotCss: `width:9px;height:9px;border-radius:999px;background:${showReach ? "#EFCB63" : "rgba(247,231,206,0.3)"};box-shadow:${showReach ? "0 0 10px #DAA520" : "none"}`,
+      legendCss: (this.props.showLegend ?? true)
+        ? "display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;border-radius:8px;border:1px solid var(--rule-soft);background:linear-gradient(180deg,#17100E,#120C0B);padding:12px 18px;box-shadow:0 10px 26px rgba(0,0,0,0.4)"
+        : "display:none",
+      log: LOG.map((l) => ({
+        turn: l.turn,
+        text: l.text,
+        css: `display:flex;gap:10px;align-items:flex-start;font-size:12.5px;line-height:1.5;padding:7px 10px;border-radius:8px;background:${l.side === "player" ? "rgba(139,0,0,0.22)" : l.side === "enemy" ? "rgba(75,0,130,0.24)" : "rgba(218,165,32,0.06)"};border-left:2px solid ${l.side === "player" ? "#A81414" : l.side === "enemy" ? "#7A3FB0" : "rgba(218,165,32,0.5)"};color:${l.side === "system" ? "rgba(247,231,206,0.65)" : "#F7E7CE"};font-style:${l.side === "system" ? "italic" : "normal"}`,
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>
