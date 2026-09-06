@@ -83,6 +83,7 @@ export const SCENARIOS: Scenario[] = [
       { kind: "warband", at: { q: 10, r: 3 } },
       { kind: "warband", at: { q: 11, r: 5 } },
     ],
+    ai: "raw",
     objectives: [
       win("Clear the field", 100),
       noCohortRouted("No legionary cohort routs", 50),
@@ -107,6 +108,7 @@ export const SCENARIOS: Scenario[] = [
       { kind: "warband", at: { q: 10, r: 5 } },
       { kind: "warband", at: { q: 9, r: 7 } },
     ],
+    ai: "raw",
     objectives: [
       win("Clear the field", 100),
       pilaFirst("Every cohort throws its pila before it fights in melee", 75),
@@ -136,6 +138,7 @@ export const SCENARIOS: Scenario[] = [
       { kind: "warband", at: { q: 11, r: 4 } },
       { kind: "warband", at: { q: 11, r: 5 } },
     ],
+    ai: "seasoned",
     objectives: [
       win("Clear the pass", 100),
       missileLossesUnder("Lose fewer than 150 men to arrows", 150, 75),
@@ -169,6 +172,7 @@ export const SCENARIOS: Scenario[] = [
       { kind: "warband", at: { q: 10, r: 7 } },
       { kind: "dacian_archers", at: { q: 12, r: 4 } },
     ],
+    ai: "seasoned",
     objectives: [
       win("Break the Dacian line", 150),
       cuneusKills("Destroy 2 enemy units with a cohort in Cuneus", 2, 75),
@@ -197,6 +201,7 @@ export const SCENARIOS: Scenario[] = [
       { kind: "cataphracts", at: { q: 12, r: 8 } },
       { kind: "warband", at: { q: 13, r: 4 } },
     ],
+    ai: "veteran",
     objectives: [
       win("Destroy the Roxolani", 150),
       noCohortRouted("No legionary cohort routs", 75),
@@ -239,6 +244,7 @@ export const SCENARIOS: Scenario[] = [
       { kind: "cataphracts", at: { q: 13, r: 7 } },
       { kind: "warband", at: { q: 13, r: 4 } },
     ],
+    ai: "veteran",
     objectives: [
       win("Take the terraces", 250),
       pilaFirst("Every cohort throws pila before melee", 50),

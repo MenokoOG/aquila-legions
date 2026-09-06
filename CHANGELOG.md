@@ -6,6 +6,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed — the enemy fights
+
+`enemyTurn` was 95 lines of greedy per-unit behaviour: sort by role, walk at the nearest Roman, swing at whoever is adjacent. It was readable and it was exploitable — every scenario solved the same way, by baiting one warband at a time onto a cohort of your choosing. The host now plans as a host. `client/src/engine/ai/` replaces `client/src/engine/ai.ts`: `evaluate.ts` prices a blow or a hex, `act.ts` takes one unit's turn, `index.ts` runs the host's.
+
+- **Everything is priced through `forecast`**, the same pure formula the player's own forecast panel shows. The AI cannot know a number the player cannot see, and it cannot hold an opinion the combat code disagrees with. A tortoise is a poor target because the missile multiplier says so, not because a line of code says archers dislike tortoises.
+- **The host picks one unit to break each turn** — the one it can hurt most, summed over every unit that can reach it. Convergence, weakness and softness are all already inside that sum, so nothing weighs them separately, and the host will not agree to concentrate on something it cannot actually hurt. It is a preference, not an order: a unit with a plainly better blow in front of it takes that one.
+- **Flanking, the charge and higher ground are emergent, not scripted.** A unit weighs every hex it could attack from, with the rules asked as though it were already standing there. Coming round to the side of a cohort scores better because `attackMultiplier` says a flanked target takes 30% more, and a cataphract crosses two hexes because that is what `chargeBonus` pays for. There is no flanking rule in the AI.
+- **It will not feed itself to you piecemeal.** A unit that would walk into contact alone waits for a neighbour instead. Bounded deliberately, because a stalled battle is an enemy win: holding stops the moment anyone is in contact, and stops for everyone at the halfway turn.
+- **A veteran host counts the counter-attack** and declines a trade that costs more than it wins, so a broken warband no longer throws its last men at a first cohort for eleven casualties.
+- **Archers step out of a sword fight before shooting** instead of loosing arrows at the man hitting them.
+- **The enemy's calibre is a property of the scenario, and the briefing names it.** `raw` for the first two battles (they come straight at you), `seasoned` for the middle two, `veteran` for the Roxolani and Sarmizegetusa. A lesson you are still learning should not be examined by the best opponent in the game. The table is data, in `shared/data/ai-levels.ts`.
+
+A whole enemy turn costs 1.0 ms on average and 1.5 ms at worst on Sarmizegetusa, the biggest board the game ships — 19 units and roughly 250 forecasts. It runs once a turn, not once a frame.
+
+### Added
+
+- `test/ai.test.ts`: 12 tests over what the host actually does — concentrating fire, coming round a flank, keeping archers off the swords, charging with the horse, leaving a tortoise alone, declining a losing trade, holding for support, and committing anyway once the battle is half gone. Two of them exist to catch the failure modes the design invites: that the host never closes, and that it stalls out the clock.
+
 ### Changed — an objective is a comparison against a metric
 
 `Objective` carried a `kind` from a closed union and two files switched over it: the sidebar's live readout in `client/src/engine/objectives.ts`, and the scoring in `server/progress.ts`. Nine cases, written twice, in different packages, with nothing that would fail if the two ever disagreed about what "met" meant. Both switches are gone. See `docs/adr/0003-objectives-are-metric-comparisons.md`.

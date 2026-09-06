@@ -12,6 +12,37 @@ export type Formation = "line" | "testudo" | "cuneus" | "orbis";
 
 export type Terrain = "plain" | "forest" | "hill" | "rough";
 
+/** How well the enemy fights. The table of what each level can do is in `data/ai-levels.ts`. */
+export type AiLevel = "raw" | "seasoned" | "veteran";
+
+/**
+ * What an enemy host is capable of, as switches rather than as a difficulty
+ * number. Every one of these is a thing the player can watch happen and learn
+ * to expect, which a multiplier on the dice would not be.
+ */
+export interface AiPolicy {
+  /** Shown in the briefing, so the player knows what they are walking into. */
+  name: string;
+  blurb: string;
+  /**
+   * Weigh every hex the unit could attack from, rather than closing by the
+   * shortest route and swinging. This is where flanking, the charge and higher
+   * ground come from: they are not rules the AI knows, they are what the combat
+   * formulas say about one position over another.
+   */
+  weighPositions: boolean;
+  /** Concentrate the host on one unit a turn instead of each man picking his own. */
+  focusFire: boolean;
+  /** Count the counter-attack, and refuse a trade that costs more than it wins. */
+  weighTrades: boolean;
+  /** Missile troops step out of contact before shooting rather than fighting at the bow. */
+  kite: boolean;
+  /** Wait for a neighbour rather than walking into a cohort alone. Bounded; see `ai/act.ts`. */
+  holdForSupport: boolean;
+  /** Prefer ground that fights well when there is nothing to attack. */
+  useTerrain: boolean;
+}
+
 export interface Hex {
   q: number;
   r: number;
@@ -175,6 +206,12 @@ export interface Scenario {
   objectives: Objective[];
   unlocksCodex: string[];
   maxTurns: number;
+  /**
+   * How well the enemy fights here. Unset is the middle level. The campaign
+   * escalates it, because a lesson you are still learning should not be
+   * examined by the best opponent in the game.
+   */
+  ai?: AiLevel;
 }
 
 export interface CodexEntry {

@@ -6,7 +6,7 @@ import { UNITS } from "../shared/data/units.js";
 import { FORMATIONS, FORMATION_ORDER } from "../shared/data/formations.js";
 import { createBattle, faction, opposing, toStats, unitsOf } from "../client/src/engine/battle.js";
 import { endTurn } from "../client/src/engine/rules.js";
-import { enemyTurn } from "../client/src/engine/ai.js";
+import { enemyTurn } from "../client/src/engine/ai/index.js";
 import { fixRoll } from "./helpers.js";
 
 /**

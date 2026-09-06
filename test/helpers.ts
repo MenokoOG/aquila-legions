@@ -1,4 +1,4 @@
-import type { Objective, Scenario, Terrain, UnitPlacement } from "../shared/types.js";
+import type { AiLevel, Objective, Scenario, Terrain, UnitPlacement } from "../shared/types.js";
 import { type BattleState, type BattleUnit, createBattle } from "../client/src/engine/battle.js";
 import { setRoll } from "../client/src/engine/rules.js";
 
@@ -20,6 +20,8 @@ export interface FieldSpec {
   terrain?: Record<string, Terrain>;
   maxTurns?: number;
   objectives?: Scenario["objectives"];
+  /** How well the enemy fights. Unset leaves the default level. */
+  ai?: AiLevel;
 }
 
 export function scenario(spec: FieldSpec = {}): Scenario {
@@ -32,6 +34,7 @@ export function scenario(spec: FieldSpec = {}): Scenario {
     enemy: spec.dacia ?? [],
     objectives: spec.objectives ?? [WIN],
     unlocksCodex: [],
+    ...(spec.ai ? { ai: spec.ai } : {}),
   };
 }
 
