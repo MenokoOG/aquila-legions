@@ -26,6 +26,9 @@ export const METRICS: Record<Metric, MetricDef> = {
   cohortsYetToThrow: { label: "yet to throw", clean: "all thrown" },
   pilaVolleys: { label: "volleys thrown", clean: "none thrown" },
   pilaSkipped: { label: "drew first", clean: "volley first" },
+  keyHexesHeld: { label: "held", clean: "none held" },
+  unitsExtracted: { label: "away", clean: "none away" },
+  turnsSurvived: { label: "turns held", clean: "none" },
   turns: { label: "turns", clean: "none" },
 };
 

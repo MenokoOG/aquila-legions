@@ -1,13 +1,22 @@
-import type { Formation, Hex, Side, Terrain } from "../../../shared/types.js";
+import type { Formation, Hex, Side, Terrain, VictoryCondition } from "../../../shared/types.js";
 import { FORMATIONS } from "../../../shared/data/formations.js";
+import { TERRAIN } from "../../../shared/data/terrain.js";
 import { distance, hexAt, indexOf, key, neighborTable, neighbors, same } from "../hex.js";
 import {
-  type BattleState, type BattleUnit, faction, isCore, log, opposing, terrainAt, terrainGrid, unitAt, unitsOf,
+  type BattleState, type BattleUnit, costGrid, faction, isCore, log, metrics, opposing, terrainAt,
+  unitAt, unitsOf,
 } from "./battle.js";
+import { testObjective } from "../../../shared/objectives.js";
 
 /** Movement, combat, and turn rules. Every number that shapes play lives here or in the formation table. */
 
 const ROUT_FRACTION = 0.25;
+/**
+ * A brittle unit standing beside one that has just broken goes with it if it is
+ * already this shaken. Boudica's host was vast and held together by confidence;
+ * Tacitus has the whole of it come apart at once when the front gave way.
+ */
+const CASCADE_FRACTION = 0.6;
 const MELEE_SCALE = 3.0;
 const RETALIATION = 0.55;
 
@@ -22,14 +31,13 @@ export function setRoll(fn: () => number): void {
   roll = fn;
 }
 
+/** Move points to enter. Impassable ground answers `Infinity`, which no budget covers. */
 export function moveCost(t: Terrain): number {
-  return t === "plain" ? 1 : 2;
+  return TERRAIN[t].cost ?? Infinity;
 }
 
 function terrainDefense(t: Terrain): number {
-  if (t === "hill") return 1.2;
-  if (t === "forest") return 1.15;
-  return 1.0;
+  return TERRAIN[t].defense;
 }
 
 export function effectiveMove(u: BattleUnit): number {
@@ -61,7 +69,7 @@ export function movement(s: BattleState, u: BattleUnit, fresh = false): Movement
   const { width, height } = s.scenario;
   const cells = width * height;
   const table = neighborTable(width, height);
-  const terrain = terrainGrid(s.scenario);
+  const cost = costGrid(s.scenario);
 
   // -1 empty, 0 a friend to cross, 1 an enemy that blocks.
   const blocked = new Int8Array(cells).fill(-1);
@@ -73,8 +81,9 @@ export function movement(s: BattleState, u: BattleUnit, fresh = false): Movement
   const start = indexOf(u.at, width);
   best[start] = 0;
 
-  // Terrain costs 1 or 2, so a hex is never relaxed into a bucket already drained.
-  // That is what makes plain buckets exact here, and cheaper than re-sorting a frontier.
+  // Every terrain costs at least one move point, so a hex is only ever relaxed
+  // into a bucket further along than the one being drained. That is what makes
+  // plain buckets exact here, and cheaper than re-sorting a frontier.
   const buckets: number[][] = Array.from({ length: budget + 1 }, () => []);
   buckets[0]!.push(start);
 
@@ -89,7 +98,9 @@ export function movement(s: BattleState, u: BattleUnit, fresh = false): Movement
         if (next < 0) continue;
         const occupant = blocked[next]!;
         if (occupant === 1) continue;
-        const step = c + (terrain[next] === "plain" ? 1 : 2);
+        const ground = cost[next]!;
+        if (ground < 0) continue; // a crag is not slow, it is shut
+        const step = c + ground;
         if (step > budget || best[next]! <= step) continue;
         best[next] = step;
         from[next] = cur;
@@ -100,16 +111,16 @@ export function movement(s: BattleState, u: BattleUnit, fresh = false): Movement
 
   // Back to the "q,r" shape the rest of the game speaks, for the handful of hexes
   // that are actually reachable rather than for every hex walked.
-  const cost = new Map<string, number>();
+  const reached = new Map<string, number>();
   const fromMap = new Map<string, Hex>();
   for (let i = 0; i < cells; i++) {
     if (best[i] === UNREACHED || i === start) continue;
     const h = hexAt(i, width);
     const k = key(h);
     fromMap.set(k, hexAt(from[i]!, width));
-    if (blocked[i] === -1) cost.set(k, best[i]!);
+    if (blocked[i] === -1) reached.set(k, best[i]!);
   }
-  return { cost, from: fromMap };
+  return { cost: reached, from: fromMap };
 }
 
 /** Hexes this unit can end its move on, mapped to what the trip costs. */
@@ -153,7 +164,26 @@ export function moveUnit(s: BattleState, u: BattleUnit, to: Hex): boolean {
   u.movedDist = distance(u.at, to);
   u.at = { ...to };
   u.moved = true;
+  extract(s, u);
   return true;
+}
+
+/** Whether this hex is a way off the board for the side that owns it. */
+export function isExit(s: BattleState, u: BattleUnit, h: Hex): boolean {
+  if (u.side !== "player") return false;
+  return (s.scenario.exits ?? []).some((e) => same(e, h));
+}
+
+/**
+ * A unit that ends its move on an exit walks off the board. Scenarios that
+ * teach getting away rather than winning are counting these.
+ */
+function extract(s: BattleState, u: BattleUnit): void {
+  if (!isExit(s, u, u.at)) return;
+  s.units = s.units.filter((x) => x.id !== u.id);
+  s.track.unitsExtracted += 1;
+  log(s, `${u.label} is clear of the field.`, "system");
+  checkOver(s);
 }
 
 export function adjacentEnemies(s: BattleState, u: BattleUnit): BattleUnit[] {
@@ -263,6 +293,30 @@ function checkRout(s: BattleState, victim: BattleUnit, killer: BattleUnit, flank
     if (flanked) s.track.flankKills += 1;
     if (killer.tmpl.mounted) s.track.cavalryKills += 1;
   }
+  cascade(s, victim);
+}
+
+/**
+ * A break spreading down the line. Only brittle units go, and only ones already
+ * shaken, and each is asked once: the front of a warhost can come apart in one
+ * turn, but it cannot come apart twice.
+ */
+function cascade(s: BattleState, from: BattleUnit, asked: Set<string> = new Set()): void {
+  const { width, height } = s.scenario;
+  const neighbours = neighbors(from.at, width, height)
+    .map((h) => unitAt(s, h))
+    .filter((x): x is BattleUnit => !!x && x.side === from.side && x.tmpl.brittle === true);
+
+  for (const u of neighbours) {
+    if (asked.has(u.id)) continue;
+    asked.add(u.id);
+    if (u.men > u.maxMen * CASCADE_FRACTION) continue;
+    s.units = s.units.filter((x) => x.id !== u.id);
+    log(s, `${u.label} sees ${from.label} go, and goes with it.`, "system");
+    s.listener?.rout?.(u);
+    if (u.side === "player" && isCore(u)) s.track.cohortsRouted += 1;
+    cascade(s, u, asked);
+  }
 }
 
 export function melee(s: BattleState, a: BattleUnit, t: BattleUnit): void {
@@ -322,19 +376,44 @@ function tallyPlayerTurn(s: BattleState): void {
   }
 }
 
+/** The scenario's own win condition. Absent means the old one: clear the field. */
+export function victoryCondition(s: BattleState): VictoryCondition {
+  return s.scenario.victory ?? {
+    metric: "enemiesLeft", compare: "zero",
+    text: `Rout or destroy every ${faction(s, "enemy").adjective} unit.`,
+  };
+}
+
+export function victoryMet(s: BattleState): boolean {
+  const v = victoryCondition(s);
+  return testObjective({ id: "victory", text: "", metric: v.metric, compare: v.compare, value: v.value, points: 0, hint: "" }, metrics(s));
+}
+
 export function checkOver(s: BattleState): void {
   if (s.over) return;
-  if (unitsOf(s, "enemy").length === 0) {
-    s.over = { won: true, reason: `The field is yours. ${faction(s, "enemy").plural} are broken.` };
+  // The win is tested first. A scenario about getting away is won by the last
+  // unit walking off the board, which would otherwise read as an army destroyed.
+  if (victoryMet(s)) {
+    s.over = { won: true, reason: victoryReason(s) };
   } else if (unitsOf(s, "player").length === 0) {
     s.over = { won: false, reason: `${faction(s, "player").plural} is destroyed.` };
   } else if (s.turn > s.scenario.maxTurns) {
-    s.over = { won: false, reason: "Night falls with the enemy still in the field." };
+    s.over = { won: false, reason: s.scenario.victory
+      ? `Night falls with ${victoryCondition(s).text.toLowerCase().replace(/\.$/, "")} undone.`
+      : "Night falls with the enemy still in the field." };
   }
   if (s.over) log(s, s.over.reason, "system");
 }
 
+function victoryReason(s: BattleState): string {
+  if (!s.scenario.victory) return `The field is yours. ${faction(s, "enemy").plural} are broken.`;
+  return `${victoryCondition(s).text} Done.`;
+}
+
 export function endTurn(s: BattleState): Side {
+  // Nothing happens until the line is set. Enforced here rather than only in the
+  // screen, so the rule holds for anything that drives the engine.
+  if (s.phase === "deploy") return s.active;
   if (s.active === "player") tallyPlayerTurn(s);
   for (const u of s.units) { u.moved = false; u.acted = false; u.movedDist = 0; }
   s.active = opposing(s.active);

@@ -1,6 +1,12 @@
 # Aquila: Legions of Trajan
 
-A local, single-player hex-tactics game about commanding Roman legions in the Dacian Wars (101 to 106 AD). Six battles, each built to teach one thing the Imperial legion did well: the pilum volley, the testudo, the cuneus, the orbis, the auxiliary cavalry on the flank, and combined arms. Win a battle and the history behind its tactic unlocks in the Codex. History points and rank persist between sessions.
+A local, single-player hex-tactics game about commanding Roman legions. Two campaigns, twelve battles, each built to teach one thing.
+
+**The Dacian Wars (101 to 106 AD)** teach what the Imperial legion did well: the pilum volley, the testudo, the cuneus, the orbis, the auxiliary cavalry on the flank, and combined arms.
+
+**The Boudican Revolt (60 to 61 AD)** unlocks after it, and teaches the thing those tools cannot supply: ground. Delay as a victory at Camulodunum, a column caught on the road, an evacuation, a defile chosen and held, Watling Street at ten to one, and a punitive winter you can fail by winning too hard. Four of its six battles are not won by clearing the field.
+
+Win a battle and the history behind its tactic unlocks in the Codex. History points and rank persist between sessions.
 
 Nothing leaves your machine. The server is a small Express API on localhost that keeps one JSON save file.
 
@@ -31,7 +37,8 @@ Then open http://localhost:3117.
 - The objective list tracks itself as you play, so you can see the lesson landing or slipping before the battle is over.
 - The Praefectus panel on the right says the two or three things an officer would mention: form the tortoise, throw before you draw, that charge gets you broken, the horse arrives next turn. Press **Keep** on one to file it in your Commentarii.
 - Undo takes back orders within your own turn. Ending the turn commits: the Dacians move, and the dice are not re-rollable.
-- Clear the field before the turn limit.
+- Clearing the field is only one way to win. A battle may be won by lasting to the turn limit, by getting units off a marked exit, or by holding marked ground when the fighting stops. The briefing says which, and the board draws it: dashed green is ground to hold, gold is a way off the board.
+- Some battles start by choosing where to stand. Deployment costs nothing and can be redone as often as you like; nothing moves until you set the line.
 
 ### Keys
 
@@ -45,17 +52,19 @@ Then open http://localhost:3117.
 | `Esc` | Deselect |
 | `L` | Briefing and lesson |
 
+During deployment, `Tab` steps through the line, the arrows on each row move that unit along the zone, and `Enter` sets it.
+
 ## Layout
 
 ```
-shared/          types and game data (units, scenarios, codex) used by both sides
+shared/          types and game data (units, terrain, scenarios, codex) used by both sides
 server/          Express API: save store, progression rules, routes
 client/src/      Vite app: hex math, battle engine, AI, canvas renderer, UI
 test/            node:test suites over the rules, the forecast, and progression
 data/save.json   your campaign (git-ignored)
 ```
 
-One responsibility per file. The combat formulas live in `client/src/engine/rules.ts`; the formation numbers in `shared/data/formations.ts`; the rosters in `shared/data/units-*.ts`; the battles in `shared/data/scenarios.ts`; the history in `shared/data/codex.ts`.
+One responsibility per file. The combat formulas live in `client/src/engine/rules.ts`; the formation numbers in `shared/data/formations.ts`; the rosters in `shared/data/units-*.ts`; the ground in `shared/data/terrain.ts`; the battles in `shared/data/scenarios-*.ts`; the history in `shared/data/codex.ts`.
 
 ### The Commentarii
 
@@ -75,7 +84,9 @@ The engine deals in `player` and `enemy`. It does not contain the word "Dacia", 
 
 1. A record in `shared/data/campaigns.ts`, which supplies the names both armies are given on screen.
 2. A roster file, `shared/data/units-<era>.ts`, imported into `shared/data/units.ts`. `UnitKind` is derived from what is there, so the type follows the data.
-3. Scenarios in `shared/data/scenarios.ts` carrying that `campaignId`, and codex entries in `shared/data/codex.ts`.
+3. A scenario file, `shared/data/scenarios-<era>.ts`, imported into `shared/data/scenarios.ts`, with each battle carrying that `campaignId` and counting its own `order` from one. Codex entries go in `shared/data/codex.ts`.
+
+Britannia was built that way and needed no edit to the combat rules. What it did need is in `docs/adr/0004-a-battle-is-not-always-won-by-clearing-the-field.md`: a scenario can carry its own victory condition, ground is a table, and a unit can be brittle.
 
 `test/campaign.test.ts` guards those seams: it fails if a scenario points at a campaign that does not exist, places a unit the roster does not have, or puts a unit on the wrong side. The reasoning behind the split is in `docs/adr/0002-campaign-registry-and-generic-sides.md`.
 

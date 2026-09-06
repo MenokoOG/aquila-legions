@@ -4,7 +4,8 @@ import type {
 } from "../shared/types.js";
 import { objectiveMet } from "../shared/objectives.js";
 import { METRIC_KEYS } from "../shared/data/metrics.js";
-import { SCENARIO_BY_ID, SCENARIOS } from "../shared/data/scenarios.js";
+import { SCENARIO_BY_ID, SCENARIOS, scenariosOf } from "../shared/data/scenarios.js";
+import { CAMPAIGNS } from "../shared/data/campaigns.js";
 import { CODEX, CODEX_BY_ID } from "../shared/data/codex.js";
 import { RANKS } from "../shared/data/ranks.js";
 
@@ -217,10 +218,26 @@ export function applyResult(save: SaveState, result: BattleResult): ResultRespon
   };
 }
 
+/**
+ * Whether an era is open. The first always is; a later one waits on the last
+ * battle of the one before it, so the campaigns are a sequence and `order`
+ * inside a campaign stays a position within that campaign.
+ */
+export function isCampaignUnlocked(save: SaveState, campaignId: string): boolean {
+  const campaign = CAMPAIGNS.find((c) => c.id === campaignId);
+  if (!campaign) return false;
+  if (campaign.order <= 1) return true;
+  const previous = CAMPAIGNS.find((c) => c.order === campaign.order - 1);
+  if (!previous) return true;
+  const last = scenariosOf(previous.id).at(-1);
+  return last ? save.scenarios[last.id]?.completed === true : true;
+}
+
 export function isUnlocked(save: SaveState, scenarioId: string): boolean {
   const s = SCENARIO_BY_ID[scenarioId];
   if (!s) return false;
+  if (!isCampaignUnlocked(save, s.campaignId)) return false;
   if (s.order === 1) return true;
-  const prev = SCENARIOS.find((x) => x.order === s.order - 1);
+  const prev = scenariosOf(s.campaignId).find((x) => x.order === s.order - 1);
   return prev ? save.scenarios[prev.id]?.completed === true : false;
 }

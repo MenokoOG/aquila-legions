@@ -94,10 +94,27 @@ describe("the shipped objectives", () => {
     }
   });
 
-  it("every scenario can still be won outright", () => {
+  it("pays for the win, however that scenario is won", () => {
     for (const s of SCENARIOS) {
-      const win = s.objectives.find((o) => o.compare === "victory");
-      ok(win, `${s.id} has no victory condition`);
+      // Either an objective that scores on any victory, or one that asks for
+      // exactly what the victory condition asks for. Without one of those, a
+      // player can take the field and be paid nothing for it.
+      const v = s.victory;
+      const paid = s.objectives.some((o) => o.compare === "victory"
+        || (v && o.metric === v.metric && o.compare === v.compare && o.value === v.value));
+      ok(paid, `${s.id} pays nothing for winning`);
+    }
+  });
+
+  it("gives every explicit victory condition something to measure", () => {
+    for (const s of SCENARIOS) {
+      const v = s.victory;
+      if (!v) continue;
+      ok(v.metric in METRICS, `${s.id} wins on an unmeasured "${v.metric}"`);
+      ok(v.text.length > 8, `${s.id} does not say what winning is`);
+      if (v.compare === "gte" || v.compare === "lt") {
+        ok(typeof v.value === "number" && v.value > 0, `${s.id} compares its victory against nothing`);
+      }
     }
   });
 

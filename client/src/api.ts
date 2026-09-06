@@ -17,9 +17,12 @@ export interface ScenarioSummary {
   record: ScenarioRecord | null;
 }
 
+/** A campaign as the state route sends it: the record plus whether it is open yet. */
+export type CampaignView = Campaign & { unlocked?: boolean };
+
 export interface StateResponse {
   save: SaveState;
-  campaigns: Campaign[];
+  campaigns: CampaignView[];
   scenarios: ScenarioSummary[];
 }
 

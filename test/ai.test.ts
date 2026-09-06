@@ -154,13 +154,13 @@ describe("the enemy host", () => {
       ai: "veteran",
       maxTurns: 20,
       rome: [
-        { kind: "cohort", at: { q: 5, r: 3 } },
-        { kind: "cohort", at: { q: 5, r: 5 } },
+        { kind: "cohort", at: { q: 1, r: 3 } },
+        { kind: "cohort", at: { q: 1, r: 5 } },
       ],
-      // One warband in reach of contact, its nearest fellow far behind.
+      // One warband three hexes from contact, its nearest fellow seven behind it.
       dacia: [
-        { kind: "warband", at: { q: 8, r: 4 } },
-        { kind: "warband", at: { q: 9, r: 9 } },
+        { kind: "warband", at: { q: 4, r: 4 } },
+        { kind: "warband", at: { q: 9, r: 7 } },
       ],
     });
     enemyMoves(s);

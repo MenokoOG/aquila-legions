@@ -25,6 +25,12 @@ export const FORMATIONS: Record<Formation, FormationDef> = {
     attackMul: 1.4, defenseMul: 0.75, missileMul: 1, moveOverride: null,
     ignoresFlanking: false, blocksPila: false,
   },
+  march_column: {
+    name: "Marching Column", latin: "Agmen", short: "Move 5 on any ground. Half defence, and worse under missiles.",
+    history: "The order of march, not of battle: a legion strung out along a road, baggage and all. Tacitus has Legio IX destroyed in one because it was caught in column and never got into line.",
+    attackMul: 0.7, defenseMul: 0.55, missileMul: 1.5, moveOverride: 5,
+    ignoresFlanking: false, blocksPila: true,
+  },
   orbis: {
     name: "Circle", latin: "Orbis", short: "+35% defense. Ignores flanking. Cannot move.",
     history: "The last-resort all-round defense when surrounded or facing cavalry. Every man faces outward. It holds; it does not win.",
@@ -33,5 +39,14 @@ export const FORMATIONS: Record<Formation, FormationDef> = {
   },
 };
 
-/** The order formations are offered in the orders panel, and on keys 1-4. */
+/**
+ * The formations a legion always has, in the order the orders panel offers them
+ * and the keys they sit on. A scenario can name its own list; the marching
+ * column is not here because it belongs to one battle, not to every battle.
+ */
 export const FORMATION_ORDER: Formation[] = ["line", "testudo", "cuneus", "orbis"];
+
+/** What this scenario offers, which is the standard four unless it says otherwise. */
+export function formationsFor(offered: Formation[] | undefined): Formation[] {
+  return offered ?? FORMATION_ORDER;
+}

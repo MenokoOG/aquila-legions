@@ -16,7 +16,10 @@ export function testObjective(o: Objective, m: MetricBag): boolean {
   const have = m[o.metric];
   const need = o.value ?? 0;
   switch (o.compare) {
-    case "victory": return have === 0;
+    // The battle being won is the whole test. `objectiveMet` applies that, and
+    // a scenario is free to win by lasting or by getting away rather than by
+    // clearing the field, so this cannot look at a count of the enemy.
+    case "victory": return true;
     case "gte": return have >= need;
     case "lt": return have < need;
     case "zero": return have === 0;

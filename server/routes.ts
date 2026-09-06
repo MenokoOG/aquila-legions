@@ -4,7 +4,7 @@ import { SCENARIOS } from "../shared/data/scenarios.js";
 import { CAMPAIGNS } from "../shared/data/campaigns.js";
 import { CODEX } from "../shared/data/codex.js";
 import { SaveStore } from "./store.js";
-import { applyResult, isUnlocked, sanitizeStats } from "./progress.js";
+import { applyResult, isCampaignUnlocked, isUnlocked, sanitizeStats } from "./progress.js";
 import { file, toMarkdown } from "./commentarii.js";
 
 /** REST surface. All game rules live in progress.ts; this file only routes. */
@@ -19,7 +19,8 @@ export function buildRouter(store: SaveStore): Router {
       unlocked: isUnlocked(save, s.id),
       record: save.scenarios[s.id] ?? null,
     }));
-    res.json({ save, campaigns: CAMPAIGNS, scenarios });
+    const campaigns = CAMPAIGNS.map((c) => ({ ...c, unlocked: isCampaignUnlocked(save, c.id) }));
+    res.json({ save, campaigns, scenarios });
   });
 
   router.get("/scenario/:id", (req, res) => {

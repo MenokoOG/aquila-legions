@@ -8,9 +8,10 @@
 export type Side = "player" | "enemy";
 
 /** Named mechanics, not named peoples. A campaign chooses which of these it teaches. */
-export type Formation = "line" | "testudo" | "cuneus" | "orbis";
+export type Formation = "line" | "testudo" | "cuneus" | "orbis" | "march_column";
 
-export type Terrain = "plain" | "forest" | "hill" | "rough";
+/** Ground. What each one costs and what it is worth is in `data/terrain.ts`. */
+export type Terrain = "plain" | "forest" | "hill" | "rough" | "marsh" | "road" | "cliff";
 
 /** How well the enemy fights. The table of what each level can do is in `data/ai-levels.ts`. */
 export type AiLevel = "raw" | "seasoned" | "veteran";
@@ -117,6 +118,12 @@ export interface UnitTemplate {
   chargeBonus: number;
   /** Multiplier on the target's melee defense. Below 1 is a weapon that reaches past a shield. */
   armourPiercing: number;
+  /**
+   * Breaks when the unit beside it breaks. A host held together by nothing but
+   * its own confidence: Boudica's warriors, not a legion. See the cascade in
+   * `engine/rules.ts`.
+   */
+  brittle?: boolean;
   /** Three-letter board glyph, e.g. "COH". */
   glyph: string;
   /** How the log describes this unit shooting. Defaults to "shoots". */
@@ -152,6 +159,9 @@ export type Metric =
   | "orbisHeldTurns"
   | "cohortsYetToThrow"
   | "pilaVolleys"
+  | "keyHexesHeld"
+  | "unitsExtracted"
+  | "turnsSurvived"
   | "pilaSkipped"
   | "turns";
 
@@ -189,6 +199,20 @@ export interface Objective {
   outstanding?: Metric;
 }
 
+/**
+ * How the battle is won. Clearing the field is only one answer, and the second
+ * campaign is mostly about the others: holding a place, getting away, lasting
+ * until dark. It is the same shape as an `Objective` so it is judged by the same
+ * comparator, and a scenario that leaves it out means "clear the field".
+ */
+export interface VictoryCondition {
+  metric: Metric;
+  compare: Compare;
+  value?: number;
+  /** What the player is told they have to do. Shown in the briefing. */
+  text: string;
+}
+
 export interface Scenario {
   id: string;
   campaignId: string;
@@ -207,6 +231,24 @@ export interface Scenario {
   objectives: Objective[];
   unlocksCodex: string[];
   maxTurns: number;
+  /** How this one is won. Absent means clearing the field. */
+  victory?: VictoryCondition;
+  /** Ground that has to be held, for a victory or an objective that counts it. */
+  keyHexes?: Hex[];
+  /**
+   * The formations the orders panel offers here, in order, on keys 1 upward.
+   * Absent means the four a legion always has. A scenario that teaches the
+   * marching column adds it rather than every battle carrying it.
+   */
+  formations?: Formation[];
+  /** Hexes a player unit leaves the board from. Ending a move on one takes it off. */
+  exits?: Hex[];
+  /**
+   * Where the player may put their line before the first turn. A scenario with
+   * one opens in the deployment phase; without one, the placements below are
+   * the line and the battle starts immediately.
+   */
+  deployment?: { zone: Hex[]; text: string };
   /**
    * How well the enemy fights here. Unset is the middle level. The campaign
    * escalates it, because a lesson you are still learning should not be

@@ -1,6 +1,7 @@
 import type { UnitTemplate } from "../types.js";
 import { ROME_UNITS } from "./units-rome.js";
 import { DACIA_UNITS } from "./units-dacia.js";
+import { BRITANNIA_UNITS } from "./units-britannia.js";
 
 /**
  * The whole roster, assembled from the per-campaign files.
@@ -12,6 +13,7 @@ import { DACIA_UNITS } from "./units-dacia.js";
 export const UNITS = {
   ...ROME_UNITS,
   ...DACIA_UNITS,
+  ...BRITANNIA_UNITS,
 } as const satisfies Record<string, UnitTemplate>;
 
 export type UnitKind = keyof typeof UNITS;

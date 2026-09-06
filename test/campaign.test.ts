@@ -3,9 +3,10 @@ import { describe, it } from "node:test";
 import { SCENARIOS } from "../shared/data/scenarios.js";
 import { CAMPAIGNS, campaignFor } from "../shared/data/campaigns.js";
 import { UNITS } from "../shared/data/units.js";
-import { FORMATIONS, FORMATION_ORDER } from "../shared/data/formations.js";
+import { FORMATIONS, FORMATION_ORDER, formationsFor } from "../shared/data/formations.js";
 import { createBattle, faction, opposing, toStats, unitsOf } from "../client/src/engine/battle.js";
 import { endTurn } from "../client/src/engine/rules.js";
+import { commitDeployment } from "../client/src/engine/deployment.js";
 import { enemyTurn } from "../client/src/engine/ai/index.js";
 import { fixRoll } from "./helpers.js";
 
@@ -58,8 +59,10 @@ describe("the roster", () => {
 
 describe("formations as data", () => {
   it("offers every defined formation in the orders panel", () => {
-    strictEqual(FORMATION_ORDER.length, Object.keys(FORMATIONS).length);
     for (const f of FORMATION_ORDER) ok(FORMATIONS[f], `${f} is offered but not defined`);
+    for (const s of SCENARIOS) {
+      for (const f of formationsFor(s.formations)) ok(FORMATIONS[f], `${s.id} offers an undefined ${f}`);
+    }
   });
 
   it("keeps the tortoise slow and shielded and the wedge sharp and exposed", () => {
@@ -88,6 +91,8 @@ describe("a whole battle", () => {
     fixRoll(1);
     for (const scenario of SCENARIOS) {
       const s = createBattle(scenario);
+      // A scenario that opens by choosing its ground keeps the opening placement.
+      commitDeployment(s);
       // Both sides driven by the same AI, so the fight resolves rather than stalling.
       let guard = 0;
       while (!s.over && guard < 400) {

@@ -6,6 +6,68 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added — Britannia: the Boudican Revolt
+
+A second era, six battles, 60 to 61 AD. It unlocks when the Dacian Wars are finished, and the campaign screen now has a tab per era.
+
+Dacia teaches the legion's offensive tools: the volley, the tortoise, the wedge, the circle. Britannia teaches the thing those cannot supply, which is ground. Four of its six battles are not won by clearing the field.
+
+| # | Battle | Teaches | Won by |
+|---|---|---|---|
+| 1 | The Temple of Claudius | Delay is a victory | Lasting eight turns with the podium still held |
+| 2 | The Ninth on the Road | A column is not a line | Getting three units off the western road |
+| 3 | Londinium Given Up | Escort under pressure | Both parties of refugees reaching the exits |
+| 4 | Choosing the Ground | Frontage and flank security | Breaking them in the gap you picked |
+| 5 | Watling Street | Everything, at ten to one | Breaking the host, not killing it |
+| 6 | The Winter Sweep | When to stop | Clearing the bands — and killing fewer than 900 doing it |
+
+Scenario 6 is Paulinus's punitive winter, the one that had Classicianus writing to Nero and got Paulinus recalled. Its main objective is a cap: you fail it by winning too hard. It is the only objective in the game that works that way, and it costs nothing new in the engine, because a cap is a comparison and objectives have been comparisons since the change above.
+
+**New units.** The British Warhost (900 men, poor, and the least steady thing on the board), Iceni Nobles, War Chariots, British Slingers, the Wagon Line, and on the Roman side the Colonia Veterans and the Londinium Refugees, who cannot fight at all.
+
+**New ground.** Marsh costs 3 to enter and takes 10% off the defence of anything standing in it. Road costs 1, which matters only where it is the one dry line through a marsh — which is the whole shape of the second battle. Crag is impassable, and a flank resting on one cannot be turned. Terrain is a table now (`shared/data/terrain.ts`) with a cost and a defence multiplier; `moveCost` and `terrainDefense` were two `if` chains inside the combat rules.
+
+**New formation.** Marching Column: move 5 on any ground, a little over half defence, and half again as much damage from missiles. Offered only in the battle that teaches it, because a scenario now names the formations its orders panel carries.
+
+**Thirteen codex entries**, from Boudica and the burn layers under Colchester, London and St Albans to Poenius Postumus falling on his sword and Classicianus's tombstone in the British Museum. Where Tacitus gives a figure, the entry says it is a figure from a source rather than a count.
+
+### Changed — a battle is not always won by clearing the field
+
+`checkOver` said victory was an empty enemy list and the turn limit was always a defeat. A scenario now carries a victory condition in the same shape as an objective, judged by the same comparator, and absent means the old rule. See `docs/adr/0004-a-battle-is-not-always-won-by-clearing-the-field.md`.
+
+- The win is tested before the wipe, because a battle won by getting away ends with no player units on the board.
+- The turn limit is a defeat only if the condition is unmet when it arrives, which is what makes a delaying action winnable.
+- `compare: "victory"` on an objective now means the battle was won rather than the field being clear. It tested `enemiesLeft === 0`, which was the same thing when there was one way to win and quietly wrong once there were several: at Watling Street the player would have taken the field and been paid nothing. A test now asserts every scenario pays for its own win.
+- The briefing states the victory condition in words, and the board draws the ground the scenario is about — dashed green for hexes that have to be held, gold EXIT for a way off the board. A win condition the player has to infer is not a win condition.
+
+### Added — choosing the ground
+
+`Choosing the Ground` opens in a deployment phase: no clock, no enemy, and as many changes of mind as you like before you say the line is set. Fully keyboard-driven — Tab through the line, arrows step a unit along the zone, Enter sets it — and clickable for anyone who would rather point at a hex. `endTurn` refuses to run while a battle is still deploying, in the engine rather than only in the screen.
+
+### Added — a host that comes apart
+
+A unit can be `brittle`, and a brittle unit whose neighbour breaks goes with it if it is already under 60%. Tacitus has Boudica's host come apart at once when the front gave way, penned against the wagon line its own families had drawn up behind it. The warhost, the chariots and the slingers are brittle; the Iceni nobles are not, and nothing Roman is. It is a number on a template, not a rule about Britons.
+
+### Changed
+
+- Scenario `order` is a position within its campaign rather than across the game. `isUnlocked` reads the campaign a scenario belongs to, and a campaign opens when the last battle of the one before it is won.
+- Scenario data split per era: `shared/data/scenarios-dacia.ts`, `shared/data/scenarios-britannia.ts`, assembled by `scenarios.ts`. Same shape as the rosters.
+- `createBattle` now refuses a placement that is off the board or on impassable ground. The old code read a hole in the terrain grid as ordinary rough going, which is how a unit placed off the edge of a test board went unnoticed.
+
+### Performance
+
+The pathfinder reads a hex's cost on every step of every walk, and once terrain stopped being "plain or not" that lookup measured about 30% of it (`reachable` 6.1 to 8.0 µs). Costs are now laid out once per scenario as an `Int8Array` beside the terrain grid. Measured on the same board and machine as the last round:
+
+| | before Britannia | with terrain, uncached | now |
+|---|---|---|---|
+| `reachable`, one unit | 6.1 µs | 8.0 µs | 6.2 µs |
+| `pathTo`, one hover | 6.2 µs | 9.3 µs | 6.1 µs |
+| `threatMap`, after every order | 177.4 µs | 228.4 µs | 174.6 µs |
+
+### Added
+
+- `test/britannia.test.ts`: 24 tests over impassable ground and what the marsh and the road cost, the three new ways to win, the rout cascade in both directions, the deployment phase, campaign unlocking, and a headless playthrough of all six battles.
+
 ### Added — the Praefectus and the Commentarii
 
 Two things, both local, both deterministic. There is no model anywhere in this and nothing leaves the machine.

@@ -7,6 +7,11 @@ import { button, clear, el } from "./dom.js";
 
 export interface BoardBarView {
   showThreat: boolean;
+  /** How the enemy is spoken of here, so the tooltip is not stuck in one campaign. */
+  enemyAdjective: string;
+  /** The board marks ground to hold, or a way off it, only where a scenario has some. */
+  hasKeyHexes: boolean;
+  hasExits: boolean;
   /** How many hexes the enemy currently bears on. Nothing to say when the layer is off. */
   threatened: number;
   /** Timings, when the page was opened with `?perf=1`. Empty otherwise. */
@@ -22,6 +27,12 @@ const KEYS: { swatch: string; text: string }[] = [
   { swatch: "sw-arrow", text: "Enemy arrows reach here" },
 ];
 
+/** Only shown where the scenario actually uses them. */
+const GROUND_KEYS = {
+  key: { swatch: "sw-hold", text: "Hold this ground" },
+  exit: { swatch: "sw-exit", text: "A way off the board" },
+};
+
 export function renderBoardBar(root: HTMLElement, v: BoardBarView, onToggle: () => void): void {
   clear(root);
   const toggle = button(
@@ -29,14 +40,18 @@ export function renderBoardBar(root: HTMLElement, v: BoardBarView, onToggle: () 
     onToggle,
     `btn form${v.showThreat ? " active" : ""}`,
   );
-  toggle.title = "Every hex a Dacian unit could strike on its next turn.";
+  toggle.title = `Every hex a ${v.enemyAdjective} unit could strike on its next turn.`;
 
   root.append(
     toggle,
     v.showThreat
       ? el("span", { class: "muted small", text: `${v.threatened} hexes under threat` })
       : el("span", { class: "muted small", text: "The board is showing no danger." }),
-    el("div", { class: "legend" }, ...KEYS.map((k) =>
+    el("div", { class: "legend" }, ...[
+      ...KEYS,
+      ...(v.hasKeyHexes ? [GROUND_KEYS.key] : []),
+      ...(v.hasExits ? [GROUND_KEYS.exit] : []),
+    ].map((k) =>
       el("span", { class: "legend-item" },
         el("span", { class: `swatch ${k.swatch}` }),
         el("span", { text: k.text }),
