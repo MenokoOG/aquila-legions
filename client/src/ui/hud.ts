@@ -1,5 +1,5 @@
 import type { Formation } from "../../../shared/types.js";
-import { FORMATIONS, FORMATION_ORDER } from "../../../shared/data/formations.js";
+import { FORMATIONS, formationsFor } from "../../../shared/data/formations.js";
 import type { BattleState, BattleUnit } from "../engine/battle.js";
 import { faction, terrainAt } from "../engine/battle.js";
 import { type Forecast, describeRange } from "../engine/forecast.js";
@@ -104,7 +104,12 @@ export function renderRightPanel(root: HTMLElement, s: BattleState, v: HudView):
   if (!objectives) {
     clear(root);
     objectives = el("div", { class: "objectives-slot" });
-    root.append(objectives, el("div", { class: "danger-slot" }), el("div", { class: "log-slot" }));
+    root.append(
+      el("div", { class: "advisor-slot" }),
+      objectives,
+      el("div", { class: "danger-slot" }),
+      el("div", { class: "log-slot" }),
+    );
   }
   clear(objectives);
   objectives.append(renderObjectives(s));
@@ -216,7 +221,7 @@ function renderForecast(f: Forecast): HTMLElement {
 
 function renderOrders(s: BattleState, v: HudView, h: HudHandlers): HTMLElement {
   const u = v.selected!;
-  const forms = FORMATION_ORDER;
+  const forms = formationsFor(s.scenario.formations);
   const canForm = canChangeFormation(u);
   const hasPila = pilaTargets(s, u).length > 0;
 

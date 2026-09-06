@@ -1,5 +1,6 @@
 import type {
-  BattleStats, Campaign, CodexEntry, ResultResponse, SaveState, Scenario, ScenarioRecord,
+  BattleStats, Campaign, CodexEntry, CommentariusEntry, ResultResponse, SaveState, Scenario,
+  ScenarioRecord,
 } from "../../shared/types.js";
 
 /** Thin fetch layer over the local API. */
@@ -16,9 +17,12 @@ export interface ScenarioSummary {
   record: ScenarioRecord | null;
 }
 
+/** A campaign as the state route sends it: the record plus whether it is open yet. */
+export type CampaignView = Campaign & { unlocked?: boolean };
+
 export interface StateResponse {
   save: SaveState;
-  campaigns: Campaign[];
+  campaigns: CampaignView[];
   scenarios: ScenarioSummary[];
 }
 
@@ -39,6 +43,11 @@ export const api = {
   codex: () => json<CodexView[]>("/api/codex"),
   result: (scenarioId: string, stats: BattleStats) =>
     json<ResultResponse>("/api/battle/result", { method: "POST", body: JSON.stringify({ scenarioId, stats }) }),
+  commentarii: () => json<CommentariusEntry[]>("/api/commentarii"),
+  file: (entries: CommentariusEntry[]) =>
+    json<{ added: CommentariusEntry[]; commentarii: CommentariusEntry[] }>("/api/commentarii", {
+      method: "POST", body: JSON.stringify({ entries }),
+    }),
   commander: (name: string) =>
     json<SaveState>("/api/commander", { method: "POST", body: JSON.stringify({ name }) }),
   reset: () => json<SaveState>("/api/reset", { method: "POST", body: "{}" }),

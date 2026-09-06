@@ -1,27 +1,15 @@
 import type {
-  BattleResult, BattleStats, CodexEntry, Objective, ObjectiveKind, ResultResponse, SaveState,
+  BattleResult, BattleStats, CodexEntry, CommentariusEntry, MetricBag, ResultResponse, SaveState,
   ScenarioRecord,
 } from "../shared/types.js";
-import { SCENARIO_BY_ID, SCENARIOS } from "../shared/data/scenarios.js";
+import { objectiveMet } from "../shared/objectives.js";
+import { METRIC_KEYS } from "../shared/data/metrics.js";
+import { SCENARIO_BY_ID, SCENARIOS, scenariosOf } from "../shared/data/scenarios.js";
+import { CAMPAIGNS } from "../shared/data/campaigns.js";
 import { CODEX, CODEX_BY_ID } from "../shared/data/codex.js";
 import { RANKS } from "../shared/data/ranks.js";
 
-/** Pure progression rules: which objectives a battle met, points, codex unlocks, rank. */
-
-export function objectiveMet(o: Objective, s: BattleStats): boolean {
-  const v = o.value ?? 0;
-  switch (o.kind) {
-    case "win": return s.won;
-    case "pila_before_melee": return s.won && s.pilaBeforeMelee;
-    case "missile_losses_under": return s.won && s.missileLosses < v;
-    case "cuneus_kills": return s.won && s.cuneusKills >= v;
-    case "flank_kills": return s.won && s.flankKills >= v;
-    case "no_cohort_routed": return s.won && s.cohortsRouted === 0;
-    case "testudo_under_fire": return s.won && s.testudoTurnsUnderFire >= v;
-    case "orbis_held": return s.won && s.orbisHeldTurns >= v;
-    case "cavalry_kills": return s.won && s.cavalryKills >= v;
-  }
-}
+/** Pure progression rules: points, codex unlocks, rank. Objectives are judged in `shared/objectives.ts`. */
 
 export function rankFor(points: number): string {
   let title = RANKS[0]?.title ?? "Tiro (Recruit)";
@@ -29,21 +17,26 @@ export function rankFor(points: number): string {
   return title;
 }
 
+/** The save shape this build writes. A v1 file on disk is migrated on read. */
+export const SAVE_VERSION = 2;
+
 export function freshSave(): SaveState {
   return {
-    version: 1,
+    version: 2,
     commander: "Legatus",
     historyPoints: 0,
     rank: "Tiro (Recruit)",
     scenarios: {},
     codexUnlocked: [],
+    commentarii: [],
     battles: 0,
     updatedAt: new Date().toISOString(),
   };
 }
 
-const OBJECTIVE_KINDS = new Set<string>(
-  SCENARIOS.flatMap((s) => s.objectives.map((o) => o.kind as string)),
+/** Every objective id the shipped scenarios use. Anything else in a save is dropped. */
+const OBJECTIVE_IDS = new Set<string>(
+  SCENARIOS.flatMap((s) => s.objectives.map((o) => o.id)),
 );
 
 function count(v: unknown): number {
@@ -53,13 +46,70 @@ function count(v: unknown): number {
 function record(raw: unknown, scenarioId: string): ScenarioRecord | null {
   if (!SCENARIO_BY_ID[scenarioId] || typeof raw !== "object" || raw === null) return null;
   const r = raw as Partial<ScenarioRecord>;
-  const kinds = Array.isArray(r.objectivesMet) ? r.objectivesMet : [];
+  const met = Array.isArray(r.objectivesMet) ? r.objectivesMet : [];
   return {
     completed: r.completed === true,
     bestPoints: count(r.bestPoints),
     attempts: count(r.attempts),
-    objectivesMet: [...new Set(kinds.filter((k): k is ObjectiveKind => typeof k === "string" && OBJECTIVE_KINDS.has(k)))],
+    objectivesMet: [...new Set(met.filter((id): id is string => typeof id === "string" && OBJECTIVE_IDS.has(id)))],
   };
+}
+
+/** The blank line between a codex entry's paragraphs when it is filed as one note. */
+const BLANK_LINE = "\n\n";
+
+/** How long a note may be before it is cut. Nothing in the game writes near this. */
+const NOTE_LIMIT = 2000;
+const NOTEBOOK_LIMIT = 500;
+
+const SOURCES = new Set(["trigger", "codex", "tip"]);
+
+function text(v: unknown, limit: number): string {
+  return typeof v === "string" ? v.trim().slice(0, limit) : "";
+}
+
+/**
+ * The notebook is written by the client and read back by it, so it is cleaned
+ * on the way in like everything else: entries without an id or a title are
+ * dropped, the same id is never filed twice, and the oldest go first if it ever
+ * grows past the limit.
+ */
+export function sanitizeCommentarii(raw: unknown): CommentariusEntry[] {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  const out: CommentariusEntry[] = [];
+  for (const item of raw) {
+    if (typeof item !== "object" || item === null) continue;
+    const e = item as Partial<CommentariusEntry>;
+    const id = text(e.id, 64);
+    const title = text(e.title, 120);
+    if (!id || !title || seen.has(id)) continue;
+    seen.add(id);
+    out.push({
+      id,
+      source: SOURCES.has(e.source as string) ? e.source as CommentariusEntry["source"] : "tip",
+      title,
+      body: text(e.body, NOTE_LIMIT),
+      tags: Array.isArray(e.tags)
+        ? [...new Set(e.tags.filter((t): t is string => typeof t === "string").map((t) => t.trim().slice(0, 32)))].slice(0, 8)
+        : [],
+      scenarioId: SCENARIO_BY_ID[text(e.scenarioId, 64)] ? text(e.scenarioId, 64) : "",
+      at: text(e.at, 40) || new Date().toISOString(),
+    });
+  }
+  return out.slice(-NOTEBOOK_LIMIT);
+}
+
+/**
+ * The battle report arrives over HTTP, so it is read the same way the save file
+ * is: every metric is present, whole and non-negative, whatever was posted.
+ */
+export function sanitizeStats(raw: unknown): BattleStats {
+  const r = (typeof raw === "object" && raw !== null ? raw : {}) as Partial<BattleStats>;
+  const posted = (typeof r.metrics === "object" && r.metrics !== null ? r.metrics : {}) as Partial<MetricBag>;
+  const metrics = {} as MetricBag;
+  for (const k of METRIC_KEYS) metrics[k] = count(posted[k]);
+  return { won: r.won === true, metrics };
 }
 
 /**
@@ -70,8 +120,11 @@ function record(raw: unknown, scenarioId: string): ScenarioRecord | null {
 export function sanitizeSave(raw: unknown): SaveState {
   const base = freshSave();
   if (typeof raw !== "object" || raw === null) return base;
-  const r = raw as Partial<SaveState>;
-  if (r.version !== 1) return base;
+  const r = raw as Omit<Partial<SaveState>, "version"> & { version?: unknown };
+  // v1 knew nothing about the Commentarii. Reading one is the migration: every
+  // other field is unchanged, so an old campaign keeps its points and its codex
+  // and gains an empty notebook. `SaveStore` keeps a copy of the v1 file first.
+  if (r.version !== 1 && r.version !== 2) return base;
 
   const scenarios: Record<string, ScenarioRecord> = {};
   for (const [id, value] of Object.entries(r.scenarios ?? {})) {
@@ -88,12 +141,13 @@ export function sanitizeSave(raw: unknown): SaveState {
   const commander = typeof r.commander === "string" && r.commander.trim() ? r.commander.trim().slice(0, 32) : base.commander;
 
   return {
-    version: 1,
+    version: 2,
     commander,
     historyPoints,
     rank: rankFor(historyPoints),
     scenarios,
     codexUnlocked,
+    commentarii: sanitizeCommentarii(r.commentarii),
     battles: count(r.battles),
     updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : base.updatedAt,
   };
@@ -109,19 +163,19 @@ export function applyResult(save: SaveState, result: BattleResult): ResultRespon
   record.attempts += 1;
   save.battles += 1;
 
-  const met: ObjectiveKind[] = [];
+  const met: string[] = [];
   let points = 0;
   for (const o of scenario.objectives) {
     if (objectiveMet(o, result.stats)) {
-      met.push(o.kind);
+      met.push(o.id);
       points += o.points;
     }
   }
 
   // Points are awarded once per objective per scenario. Replays only earn newly met objectives.
-  const newlyMet = met.filter((k) => !record.objectivesMet.includes(k));
+  const newlyMet = met.filter((id) => !record.objectivesMet.includes(id));
   const earned = scenario.objectives
-    .filter((o) => newlyMet.includes(o.kind))
+    .filter((o) => newlyMet.includes(o.id))
     .reduce((sum, o) => sum + o.points, 0);
 
   record.objectivesMet = Array.from(new Set([...record.objectivesMet, ...met]));
@@ -141,6 +195,15 @@ export function applyResult(save: SaveState, result: BattleResult): ResultRespon
         if (entry) {
           save.codexUnlocked.push(id);
           newCodex.push(entry);
+          save.commentarii.push({
+            id: `codex:${entry.id}`,
+            source: "codex",
+            title: entry.title,
+            body: entry.body.join(BLANK_LINE),
+            tags: entry.tags,
+            scenarioId: scenario.id,
+            at: new Date().toISOString(),
+          });
         }
       }
     }
@@ -155,10 +218,26 @@ export function applyResult(save: SaveState, result: BattleResult): ResultRespon
   };
 }
 
+/**
+ * Whether an era is open. The first always is; a later one waits on the last
+ * battle of the one before it, so the campaigns are a sequence and `order`
+ * inside a campaign stays a position within that campaign.
+ */
+export function isCampaignUnlocked(save: SaveState, campaignId: string): boolean {
+  const campaign = CAMPAIGNS.find((c) => c.id === campaignId);
+  if (!campaign) return false;
+  if (campaign.order <= 1) return true;
+  const previous = CAMPAIGNS.find((c) => c.order === campaign.order - 1);
+  if (!previous) return true;
+  const last = scenariosOf(previous.id).at(-1);
+  return last ? save.scenarios[last.id]?.completed === true : true;
+}
+
 export function isUnlocked(save: SaveState, scenarioId: string): boolean {
   const s = SCENARIO_BY_ID[scenarioId];
   if (!s) return false;
+  if (!isCampaignUnlocked(save, s.campaignId)) return false;
   if (s.order === 1) return true;
-  const prev = SCENARIOS.find((x) => x.order === s.order - 1);
+  const prev = scenariosOf(s.campaignId).find((x) => x.order === s.order - 1);
   return prev ? save.scenarios[prev.id]?.completed === true : false;
 }

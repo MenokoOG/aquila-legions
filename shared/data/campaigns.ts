@@ -15,6 +15,15 @@ export const CAMPAIGNS: Campaign[] = [
     player: { name: "Rome", adjective: "Roman", plural: "The legion" },
     enemy: { name: "Dacia", adjective: "Dacian", plural: "The Dacians" },
   },
+  {
+    id: "britannia",
+    order: 2,
+    title: "The Burning of Britain",
+    subtitle: "The Boudican Revolt, 60 to 61 AD",
+    blurb: "Six battles about ground, frontage and nerve. Dacia taught you what a legion does; this one is won and lost by where you choose to stand, and by whether ten thousand men can be made to look like enough.",
+    player: { name: "Rome", adjective: "Roman", plural: "The legion" },
+    enemy: { name: "Britain", adjective: "British", plural: "The Britons" },
+  },
 ];
 
 export const CAMPAIGN_BY_ID: Record<string, Campaign> = Object.fromEntries(

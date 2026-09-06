@@ -7,6 +7,7 @@ import { button, clear, el } from "./ui/dom.js";
 import { showModal } from "./ui/modal.js";
 import { renderMenu } from "./ui/menu.js";
 import { renderCodex } from "./ui/codex.js";
+import { renderCommentarii } from "./ui/commentarii.js";
 import { type Dispose, mountBattle } from "./ui/battleScreen.js";
 
 /** Screen router. Menu, battle, codex. Nothing else lives here. */
@@ -49,6 +50,7 @@ async function showMenu(): Promise<void> {
     screen.append(renderMenu(data, {
       onStart: (id) => void startBattle(id),
       onCodex: () => void showCodex(),
+      onCommentarii: () => void showCommentarii(),
       onRename: () => rename(data.save.commander),
       onReset: () => confirmReset(),
     }));
@@ -63,6 +65,18 @@ async function showCodex(): Promise<void> {
     swap();
     setNav(button("Campaign", () => void showMenu(), "btn quiet"));
     screen.append(renderCodex(entries, () => void showMenu()));
+    window.scrollTo(0, 0);
+  } catch (err) {
+    fail(err);
+  }
+}
+
+async function showCommentarii(): Promise<void> {
+  try {
+    const entries = await api.commentarii();
+    swap();
+    setNav(button("Campaign", () => void showMenu(), "btn quiet"));
+    screen.append(renderCommentarii(entries, () => void showMenu()));
     window.scrollTo(0, 0);
   } catch (err) {
     fail(err);
@@ -87,6 +101,7 @@ async function startBattle(id: string): Promise<void> {
 
 async function submit(state: BattleState): Promise<void> {
   const stats = toStats(state);
+  const m = stats.metrics;
   const sc = state.scenario;
   const progress = allProgress(state);
   try {
@@ -94,7 +109,7 @@ async function submit(state: BattleState): Promise<void> {
 
     // After-action review: for anything missed, say in one line what would have met it.
     const rows = progress.map((p) => {
-      const met = out.objectivesMet.includes(p.objective.kind);
+      const met = out.objectivesMet.includes(p.objective.id);
       return el("div", { class: `result-row ${met ? "met" : "missed"}` },
         el("span", { class: "mark-x", text: met ? "✓" : "·" }),
         el("div", { class: "result-body" },
@@ -106,7 +121,7 @@ async function submit(state: BattleState): Promise<void> {
 
     const body = el("div", {},
       el("p", { class: "muted", text: state.over?.reason ?? "" }),
-      el("p", { text: `${stats.turns} turns · ${state.campaign.player.adjective} losses ${stats.playerLosses} · ${state.campaign.enemy.adjective} losses ${stats.enemyLosses}` }),
+      el("p", { text: `${m.turns} turns · ${state.campaign.player.adjective} losses ${m.playerLosses} · ${state.campaign.enemy.adjective} losses ${m.enemyLosses}` }),
       el("div", { class: "points-big", text: out.pointsEarned > 0 ? `+${out.pointsEarned} history points` : stats.won ? "Already earned" : "No points" }),
       ...rows,
       out.rankUp ? el("p", { class: "lesson-box", text: `Promoted: ${out.rankUp}` }) : null,

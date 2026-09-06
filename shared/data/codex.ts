@@ -121,6 +121,124 @@ export const CODEX: CodexEntry[] = [
       "Discipline, not the sword, was the legion's real weapon. The camp was that discipline made visible.",
     ],
   },
+  {
+    id: "boudica", title: "Boudica", era: "60 to 61 AD",
+    tags: ["britannia", "revolt"],
+    body: [
+      "Widow of Prasutagus, client king of the Iceni. He left his kingdom jointly to his daughters and to Nero, expecting that to protect it. Tacitus says the estate was plundered, Boudica flogged and her daughters raped, and the Iceni nobles stripped of their lands.",
+      "The Trinovantes joined her, and Tacitus gives their reason plainly: the veterans settled at Camulodunum had driven them off their land and treated them as slaves, and the temple of the deified Claudius stood there as, in his phrase, a citadel of eternal domination.",
+      "Cassius Dio adds a physical description written a century and a half later, and it should be read as what it is. Tacitus, writing closer and with a father-in-law who served in Britain, gives her a speech and no portrait.",
+      "Her end is not known. Tacitus says she took poison. Dio says she fell sick and died and was given a rich burial. No grave has been found, and every site claimed for one is a guess.",
+    ],
+  },
+  {
+    id: "camulodunum", title: "The Colonia at Camulodunum", era: "49 to 60 AD",
+    tags: ["britannia", "archaeology"],
+    body: [
+      "Founded on the site of a legionary fortress as a settlement for time-served soldiers. It had a theatre, a senate house and the temple of Claudius, and no wall: a colonia of veterans was supposed to need none.",
+      "Tacitus says the defenders held the temple for two days before it fell, and that no more than 200 regular soldiers ever reached them.",
+      "Under modern Colchester there is a burn layer, in places half a metre thick, of fired daub and melted glass. The same layer is under London and under St Albans. It is the one part of the account that can be dug up.",
+    ],
+  },
+  {
+    id: "ninth_hispana", title: "The Ninth on the Road", era: "60 AD",
+    tags: ["britannia", "legion"],
+    body: [
+      "Quintus Petillius Cerialis brought part of Legio IX Hispana south to relieve Camulodunum and was ambushed on the march. Tacitus says the whole of the infantry was killed and Cerialis escaped with his cavalry to his camp.",
+      "The army's answer to being caught in column was the agmen quadratum, the marching square, which kept the baggage inside and the line ready to face outward. It costs speed, which is why it is not always used.",
+      "The legion was not destroyed. It was reinforced from Germany and appears in Britain for decades afterwards. It leaves the record in the second century, and the popular story that it vanished in Caledonia rests on that gap rather than on evidence: tiles stamped by the Ninth have been found at Nijmegen.",
+    ],
+  },
+  {
+    id: "roman_roads", title: "Watling Street", era: "1st century AD onward",
+    tags: ["britannia", "engineering"],
+    body: [
+      "A made road on an agger, a raised bank, cambered so water ran off, with ditches either side and metalling of rammed stone. It carried the army from the Channel through London to Wroxeter.",
+      "A road is how an army arrives in time and how it is caught strung out. Those are the same fact.",
+      "The battle that ended the revolt is placed on Watling Street by tradition and by the logic of the campaign. Tacitus names no site, and none has been found.",
+    ],
+  },
+  {
+    id: "londinium", title: "Londinium Given Up", era: "61 AD",
+    tags: ["britannia", "command"],
+    body: [
+      "Paulinus reached London ahead of his army, judged that he could not hold it with what he had, and marched out. Tacitus says he was unmoved by the weeping of those who begged him to stay, and gave the signal to move.",
+      "Those who could keep up went with the column. Tacitus says the ones who stayed, held by the place or by their age or by their sex, were destroyed by the enemy.",
+      "It is the decision the whole campaign turns on. An army kept in being can fight later, and a garrison spent on a town that cannot be held is spent for nothing. It is also the sentence in Tacitus that costs the most to read.",
+    ],
+  },
+  {
+    id: "verulamium", title: "The Third Town", era: "61 AD",
+    tags: ["britannia", "archaeology"],
+    body: [
+      "Verulamium, modern St Albans, was a municipium: a British town with Roman status, not a colony of settlers. It was burned like the others.",
+      "Tacitus gives 70,000 citizens and allies killed across the three towns. That is a figure from a source, not a count, and archaeology can confirm the burning without confirming the number.",
+      "He also notes that the Britons took no prisoners and made no exchanges, which he presents as the mark of a rising rather than of a war.",
+    ],
+  },
+  {
+    id: "defile", title: "Choosing the Ground", era: "61 AD",
+    tags: ["britannia", "tactic"],
+    body: [
+      "Tacitus, Annals XIV.34: Paulinus chose a position in a defile with a wood behind him, having made sure there were no enemies except in front and that the plain there was open, with no fear of ambush.",
+      "The reasoning is arithmetic. A host can only fight along the frontage it can present. Narrow the frontage and the extra numbers stand behind the fighting doing nothing, and cannot get round the ends.",
+      "It is the same idea as Thermopylae, and as the wood-lined field at Agincourt. It is not a Roman invention; it is a Roman habit, and the manuals treat choosing ground as a commander's first duty.",
+    ],
+  },
+  {
+    id: "paulinus", title: "Gaius Suetonius Paulinus", era: "c. 41 to 69 AD",
+    tags: ["britannia", "command"],
+    body: [
+      "A mountain-war specialist who had campaigned in the Atlas before Britain. When the revolt broke out he was on Anglesey, at the far end of the province, destroying the sacred groves of the druids.",
+      "Tacitus rates him a soldier of the first rank and is not warm about him. He was recalled after the revolt, when the procurator reported that the punishment was preventing the province from settling.",
+      "He reappears in 69 AD commanding for Otho at the first battle of Bedriacum, where his advice was overruled.",
+    ],
+  },
+  {
+    id: "watling_street", title: "The Last Battle", era: "61 AD",
+    tags: ["britannia", "battle"],
+    body: [
+      "Tacitus gives Paulinus almost 10,000 men: Legio XIV Gemina, detachments of the Twentieth, and the nearest auxiliaries. He gives the British no number he will stand behind, and reports the Roman claim of 80,000 British dead against 400 Roman.",
+      "That ratio is a victor's figure and should be read as one. The shape of the battle it describes, a narrow Roman front holding and then advancing in wedges, is consistent with everything else known about how the legion fought.",
+      "The Second Legion never came. Its acting commander, Poenius Postumus, refused the order to march.",
+    ],
+  },
+  {
+    id: "wagon_line", title: "The Wagons", era: "61 AD",
+    tags: ["britannia", "morale"],
+    body: [
+      "The families had come to watch and had drawn their wagons up in a line across the back of the field, in Tacitus's phrase at the very edge of the plain.",
+      "It is an act of confidence, and it is what turned a defeat into a massacre: a host that broke had its own wagon line behind it and nowhere to go. Tacitus says the draught animals in the traces added to the heap of bodies.",
+      "Ancient battles were rarely decided by killing. They were decided by one side deciding to leave. Take away the leaving and the killing is all that is left.",
+    ],
+  },
+  {
+    id: "poenius", title: "Poenius Postumus", era: "61 AD",
+    tags: ["britannia", "command"],
+    body: [
+      "Praefectus castrorum of Legio II Augusta, and its acting commander. He was ordered to bring the legion to join Paulinus, and did not.",
+      "Tacitus records in a single sentence that when he heard how well the other legions had done, he ran himself through with his sword, because he had cheated his own legion of a share in the glory.",
+      "It is the only thing history knows about him.",
+    ],
+  },
+  {
+    id: "classicianus", title: "Julius Classicianus", era: "61 AD onward",
+    tags: ["britannia", "government"],
+    body: [
+      "The procurator sent to Britain after the revolt, answerable for taxes and imperial property and not to the governor. Tacitus says he was on bad terms with Paulinus and let it be known that the province would find no end to its troubles while Paulinus commanded.",
+      "He wrote to Nero. An imperial freedman was sent to look, and Paulinus was relieved of the province not long after, on a pretext.",
+      "His tombstone was found in two pieces, reused in a bastion of London's Roman wall, and is in the British Museum. It was set up by his wife Julia Pacata, daughter of Julius Indus, a Gaulish noble. It is the only monument any of these people left that can still be read.",
+    ],
+  },
+  {
+    id: "aftermath", title: "When to Stop", era: "61 to 62 AD",
+    tags: ["britannia", "government"],
+    body: [
+      "Paulinus spent the winter burning the territories of the peoples who had risen, and of those who had merely wavered. Tacitus says famine did more harm than the fighting, because they had not sown, having counted on taking Roman supplies.",
+      "The complaint that reached Nero was not a moral one. It was fiscal and practical: a wrecked province pays no tax and needs a garrison, and a people with nothing left to lose has nothing to lose.",
+      "His successor, Petronius Turpilianus, did very little, and Tacitus records the result with a sneer that reads oddly now. He called it honourable peace under a nicer name.",
+    ],
+  },
 ];
 
 export const CODEX_BY_ID: Record<string, CodexEntry> = Object.fromEntries(

@@ -412,3 +412,87 @@ input.name:focus-visible { border-color: var(--gold); outline-offset: 0; }
   .commander-row { gap: 1rem; }
   .scenario-list, .codex-grid, .manual-grid { grid-template-columns: 1fr; }
 }
+
+/* ---------------------------------------------------------------------------
+   The Praefectus, the Commentarii, and the notice a filed note raises.
+   Same palette and the same rules as everything else: gold for a label, crimson
+   for Rome, emerald only ever as an edge, and every pair checked against AA.
+--------------------------------------------------------------------------- */
+
+.panel-block.advisor {
+  margin-bottom: 0.9rem; padding: 0.85rem 0.95rem;
+  border: 1px solid var(--rule); border-left: 3px solid var(--gold);
+  border-radius: var(--radius); background: linear-gradient(180deg, var(--panel-2), var(--ink-2));
+}
+.panel-block.advisor h3 {
+  margin: 0 0 0.55rem; font-size: 0.68rem; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--gold);
+}
+.tip { padding: 0.5rem 0; border-top: 1px solid var(--rule-soft); }
+.tip:first-of-type { border-top: 0; padding-top: 0; }
+.tip p { margin: 0 0 0.4rem; font-size: 0.88rem; line-height: 1.5; color: var(--muted-strong); }
+.tip-actions { display: flex; gap: 0.4rem; align-items: center; }
+.btn.small { padding: 0.2rem 0.55rem; font-size: 0.72rem; }
+
+.tag-filter { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.8rem 0 1.2rem; }
+.btn.chip { padding: 0.25rem 0.7rem; font-size: 0.74rem; letter-spacing: 0.06em; }
+.btn.chip.active { border-color: var(--gold); background: linear-gradient(180deg, var(--gold), #9A6F0C); color: var(--ink); }
+
+.codex-entry.note-trigger { border-left: 3px solid var(--gold); }
+.codex-entry.note-codex { border-left: 3px solid var(--crimson-lit); }
+.codex-entry.note-tip { border-left: 3px solid var(--emerald); }
+
+.toasts {
+  position: fixed; right: 1.1rem; bottom: 1.1rem; z-index: 60;
+  display: flex; flex-direction: column; gap: 0.6rem;
+  width: min(360px, calc(100vw - 2.2rem)); pointer-events: none;
+}
+.toast {
+  position: relative; pointer-events: auto;
+  padding: 0.9rem 2.2rem 0.9rem 1rem;
+  border: 1px solid var(--gold); border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--panel), var(--ink-2));
+  box-shadow: var(--shadow);
+}
+.toast-head {
+  font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold);
+}
+.toast h4 { margin: 0.25rem 0 0.35rem; font-size: 0.98rem; }
+.toast p { margin: 0 0 0.5rem; font-size: 0.84rem; line-height: 1.5; color: var(--muted-strong); }
+.toast-close {
+  position: absolute; top: 0.35rem; right: 0.45rem;
+  background: none; border: 0; cursor: pointer;
+  font-size: 1.1rem; line-height: 1; color: var(--muted-strong);
+}
+.toast-close:hover { color: var(--gold-lit); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .toast { animation: toast-in 220ms ease-out; }
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+/* The era tabs on the campaign screen. */
+.campaign-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 1.2rem; }
+.btn.chip.locked { opacity: 0.5; cursor: not-allowed; }
+.swatch.sw-hold { background: rgba(4, 99, 7, 0.4); border-color: var(--emerald); border-style: dashed; }
+.swatch.sw-exit { background: rgba(218, 165, 32, 0.28); border-color: var(--gold-lit); border-style: dashed; }
+
+/* Deployment: the line, before it is a line. */
+.panel-block.deploy {
+  padding: 0.9rem 1rem; border: 1px solid var(--rule); border-left: 3px solid var(--gold);
+  border-radius: var(--radius); background: linear-gradient(180deg, var(--panel-2), var(--ink-2));
+}
+.panel-block.deploy h3 {
+  margin: 0 0 0.4rem; font-size: 0.68rem; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--gold);
+}
+.deploy-row {
+  display: flex; align-items: center; gap: 0.5rem; justify-content: space-between;
+  padding: 0.35rem 0.4rem; border-top: 1px solid var(--rule-soft);
+}
+.deploy-row.selected { background: rgba(218, 165, 32, 0.10); border-radius: 4px; }
+.deploy-name { flex: 1 1 auto; text-align: left; padding: 0.2rem 0.4rem; }
+.mono { font-family: var(--font-mono); }

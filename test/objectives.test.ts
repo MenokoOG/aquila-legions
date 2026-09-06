@@ -3,15 +3,26 @@ import { beforeEach, describe, it } from "node:test";
 import type { Objective } from "../shared/types.js";
 import { objectiveProgress } from "../client/src/engine/objectives.js";
 import { endTurn, melee, setFormation, shoot, throwPila } from "../client/src/engine/rules.js";
-import { at, field, fixRoll } from "./helpers.js";
+import { WIN, at, field, fixRoll } from "./helpers.js";
 
 /** The live objective readout is the game telling you whether the lesson is landing. */
 
-const WIN: Objective = { kind: "win", text: "Clear the field", points: 100 };
-const PILA: Objective = { kind: "pila_before_melee", text: "Throw first", points: 75 };
-const NO_ROUT: Objective = { kind: "no_cohort_routed", text: "No cohort routs", points: 50 };
-const UNDER_FIRE: Objective = { kind: "testudo_under_fire", text: "Hold the tortoise", value: 2, points: 60 };
-const MISSILES: Objective = { kind: "missile_losses_under", text: "Lose under 200 to arrows", value: 200, points: 60 };
+const hint = "Something the after-action review can tell you to do differently.";
+const PILA: Objective = {
+  id: "pila_before_melee", text: "Throw first", metric: "pilaSkipped", compare: "zero",
+  outstanding: "cohortsYetToThrow", points: 75, hint,
+};
+const NO_ROUT: Objective = {
+  id: "no_cohort_routed", text: "No cohort routs", metric: "cohortsRouted", compare: "zero", points: 50, hint,
+};
+const UNDER_FIRE: Objective = {
+  id: "testudo_under_fire", text: "Hold the tortoise", metric: "testudoTurnsUnderFire", compare: "gte",
+  value: 2, points: 60, hint,
+};
+const MISSILES: Objective = {
+  id: "missile_losses_under", text: "Lose under 200 to arrows", metric: "missileLosses", compare: "lt",
+  value: 200, points: 60, hint,
+};
 
 describe("live objectives", () => {
   beforeEach(() => fixRoll(1));
@@ -41,8 +52,10 @@ describe("live objectives", () => {
       rome: [{ kind: "cohort", at: { q: 4, r: 3 } }],
       dacia: [{ kind: "warband", at: { q: 5, r: 3 } }],
     });
+    strictEqual(objectiveProgress(PILA, s).detail, "1 yet to throw");
     throwPila(s, at(s, 4, 3), at(s, 5, 3));
     strictEqual(objectiveProgress(PILA, s).status, "done");
+    strictEqual(objectiveProgress(PILA, s).detail, "all thrown");
   });
 
   it("fails the no-rout objective when a cohort breaks, but not when an auxiliary does", () => {
@@ -93,7 +106,7 @@ describe("live objectives", () => {
   it("always has something to say about how to meet it", () => {
     const s = field({ rome: [{ kind: "cohort", at: { q: 4, r: 3 } }] });
     for (const o of [WIN, PILA, NO_ROUT, UNDER_FIRE, MISSILES]) {
-      ok(objectiveProgress(o, s).hint.length > 20, `${o.kind} needs a usable hint`);
+      ok(objectiveProgress(o, s).hint.length > 20, `${o.id} needs a usable hint`);
     }
   });
 

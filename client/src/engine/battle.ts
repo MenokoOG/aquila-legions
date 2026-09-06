@@ -1,10 +1,12 @@
 import type {
-  BattleStats, Campaign, Faction, Formation, Hex, Scenario, Side, Terrain, UnitPlacement, UnitTemplate,
+  BattleStats, Campaign, Faction, Formation, Hex, MetricBag, Scenario, Side, Terrain, UnitPlacement,
+  UnitTemplate,
 } from "../../../shared/types.js";
 import type { UnitKind } from "../../../shared/data/units.js";
 import { UNITS } from "../../../shared/data/units.js";
 import { campaignFor } from "../../../shared/data/campaigns.js";
 import { key } from "../hex.js";
+import { TERRAIN, isBlocked } from "../../../shared/data/terrain.js";
 
 /** Battle state: the mutable in-memory model for one fight. No rendering, no network. */
 
@@ -25,6 +27,8 @@ export interface BattleUnit {
 }
 
 export interface Trackers {
+  /** Player units that walked off the board through an exit hex. */
+  unitsExtracted: number;
   cohortsInMelee: Set<string>;
   cohortsThrown: Set<string>;
   pilaViolated: boolean;
@@ -51,8 +55,13 @@ export interface BattleListener {
   rout?: (victim: BattleUnit) => void;
 }
 
+/** Choosing the ground, then fighting on it. Most battles start already fought. */
+export type BattlePhase = "deploy" | "battle";
+
 export interface BattleState {
   scenario: Scenario;
+  /** "deploy" only while the player is still setting the line out. */
+  phase: BattlePhase;
   /** The era this fight belongs to. Supplies every name the player reads. */
   campaign: Campaign;
   units: BattleUnit[];
@@ -82,6 +91,7 @@ export function faction(s: BattleState, side: Side): Faction {
 export function cloneBattle(s: BattleState): BattleState {
   return {
     scenario: s.scenario,
+    phase: s.phase,
     campaign: s.campaign,
     units: s.units.map((u) => ({ ...u, at: { ...u.at } })),
     turn: s.turn,
@@ -127,6 +137,27 @@ export function terrainGrid(scenario: Scenario): Terrain[] {
   return grid;
 }
 
+/**
+ * What each hex costs to enter, as a flat array, cached per scenario. `-1` is
+ * ground nothing crosses.
+ *
+ * The pathfinder reads this for every neighbour of every hex it walks, and it
+ * runs on every mouse move. Going through the terrain table there costs a
+ * property lookup and a null check per step, which measured about 30% of the
+ * walk once terrain stopped being "plain or not".
+ */
+const COST_CACHE = new WeakMap<Scenario, Int8Array>();
+
+export function costGrid(scenario: Scenario): Int8Array {
+  const cached = COST_CACHE.get(scenario);
+  if (cached) return cached;
+  const terrain = terrainGrid(scenario);
+  const costs = new Int8Array(terrain.length);
+  for (let i = 0; i < terrain.length; i++) costs[i] = TERRAIN[terrain[i]!].cost ?? -1;
+  COST_CACHE.set(scenario, costs);
+  return costs;
+}
+
 export function unitAt(s: BattleState, h: Hex): BattleUnit | undefined {
   return s.units.find((u) => u.at.q === h.q && u.at.r === h.r);
 }
@@ -148,6 +179,14 @@ export function createBattle(scenario: Scenario): BattleState {
       const kind = p.kind as UnitKind;
       const tmpl = UNITS[kind];
       if (!tmpl) throw new Error(`unknown unit kind ${p.kind}`);
+      // A placement off the board indexes past the terrain grid and the
+      // pathfinder walks into a hole. Scenario data is caught here, at load.
+      if (p.at.q < 0 || p.at.q >= scenario.width || p.at.r < 0 || p.at.r >= scenario.height) {
+        throw new Error(`${scenario.id} places ${p.kind} at ${p.at.q},${p.at.r}, off a ${scenario.width}x${scenario.height} board`);
+      }
+      if (isBlocked(scenario.terrain[key(p.at)] ?? "plain")) {
+        throw new Error(`${scenario.id} places ${p.kind} on impassable ground at ${p.at.q},${p.at.r}`);
+      }
       n += 1;
       units.push({
         id: `${side}-${n}`,
@@ -171,12 +210,14 @@ export function createBattle(scenario: Scenario): BattleState {
 
   const state: BattleState = {
     scenario,
+    phase: scenario.deployment ? "deploy" : "battle",
     campaign: campaignFor(scenario.campaignId),
     units,
     turn: 1,
     active: "player",
     log: [],
     track: {
+      unitsExtracted: 0,
       cohortsInMelee: new Set(),
       cohortsThrown: new Set(),
       pilaViolated: false,
@@ -196,14 +237,23 @@ export function createBattle(scenario: Scenario): BattleState {
   return state;
 }
 
-export function toStats(s: BattleState): BattleStats {
+/** How many of the scenario's key hexes a player unit is standing on. */
+export function keyHexesHeld(s: BattleState): number {
+  const held = new Set(unitsOf(s, "player").map((u) => key(u.at)));
+  return (s.scenario.keyHexes ?? []).filter((h) => held.has(key(h))).length;
+}
+
+/**
+ * Everything the fight has measured about itself, in the shape objectives are
+ * written against. The same bag answers the live objective panel mid-battle and
+ * the server's scoring at the end, so the two can never drift.
+ */
+export function metrics(s: BattleState): MetricBag {
   const t = s.track;
   return {
-    won: s.over?.won ?? false,
-    turns: s.turn,
+    enemiesLeft: unitsOf(s, "enemy").length,
     playerLosses: t.playerLosses,
     enemyLosses: t.enemyLosses,
-    pilaBeforeMelee: !t.pilaViolated,
     missileLosses: t.missileLosses,
     cuneusKills: t.cuneusKills,
     flankKills: t.flankKills,
@@ -211,5 +261,17 @@ export function toStats(s: BattleState): BattleStats {
     cohortsRouted: t.cohortsRouted,
     testudoTurnsUnderFire: t.testudoTurnsUnderFire,
     orbisHeldTurns: t.orbisHeldTurns,
+    cohortsYetToThrow: unitsOf(s, "player").filter((u) => isCore(u) && !t.cohortsThrown.has(u.id)).length,
+    pilaVolleys: t.cohortsThrown.size,
+    keyHexesHeld: keyHexesHeld(s),
+    unitsExtracted: t.unitsExtracted,
+    // Turns the legion has stood, which is one fewer than the turn it is now on.
+    turnsSurvived: s.turn - 1,
+    pilaSkipped: t.pilaViolated ? 1 : 0,
+    turns: s.turn,
   };
+}
+
+export function toStats(s: BattleState): BattleStats {
+  return { won: s.over?.won ?? false, metrics: metrics(s) };
 }

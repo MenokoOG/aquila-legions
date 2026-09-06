@@ -1,15 +1,29 @@
 import { deepStrictEqual, ok, strictEqual, throws } from "node:assert/strict";
 import { describe, it } from "node:test";
-import type { BattleStats, SaveState } from "../shared/types.js";
+import type { BattleStats, MetricBag, Objective, SaveState } from "../shared/types.js";
 import { SCENARIOS } from "../shared/data/scenarios.js";
 import { CODEX } from "../shared/data/codex.js";
-import { applyResult, freshSave, isUnlocked, objectiveMet, rankFor, sanitizeSave } from "../server/progress.js";
+import { objectiveMet } from "../shared/objectives.js";
+import { applyResult, freshSave, isUnlocked, rankFor, sanitizeSave } from "../server/progress.js";
 
-function stats(over: Partial<BattleStats> = {}): BattleStats {
+function stats(over: Partial<MetricBag> = {}, won = true): BattleStats {
   return {
-    won: true, turns: 6, playerLosses: 100, enemyLosses: 900,
-    pilaBeforeMelee: true, missileLosses: 0, cuneusKills: 0, flankKills: 0, cavalryKills: 0,
-    cohortsRouted: 0, testudoTurnsUnderFire: 0, orbisHeldTurns: 0,
+    won,
+    metrics: {
+      enemiesLeft: 0, turns: 6, playerLosses: 100, enemyLosses: 900,
+      pilaSkipped: 0, cohortsYetToThrow: 0, pilaVolleys: 0, missileLosses: 0,
+      keyHexesHeld: 0, unitsExtracted: 0, turnsSurvived: 6,
+      cuneusKills: 0, flankKills: 0, cavalryKills: 0,
+      cohortsRouted: 0, testudoTurnsUnderFire: 0, orbisHeldTurns: 0,
+      ...over,
+    },
+  };
+}
+
+function objective(over: Partial<Objective>): Objective {
+  return {
+    id: "test", text: "", metric: "cuneusKills", compare: "gte", points: 1,
+    hint: "A sentence long enough to be worth reading.",
     ...over,
   };
 }
@@ -21,17 +35,19 @@ describe("objective scoring", () => {
   it("awards nothing at all for a lost battle", () => {
     for (const s of SCENARIOS) {
       for (const o of s.objectives) {
-        strictEqual(objectiveMet(o, stats({ won: false, pilaBeforeMelee: true, cuneusKills: 99 })), false,
-          `${s.id}/${o.kind} should need the victory first`);
+        strictEqual(objectiveMet(o, stats({ cuneusKills: 99 }, false)), false,
+          `${s.id}/${o.id} should need the victory first`);
       }
     }
   });
 
   it("reads counting objectives as at-least and caps as strictly-under", () => {
-    ok(objectiveMet({ kind: "cuneus_kills", text: "", value: 2, points: 1 }, stats({ cuneusKills: 2 })));
-    ok(!objectiveMet({ kind: "cuneus_kills", text: "", value: 3, points: 1 }, stats({ cuneusKills: 2 })));
-    ok(objectiveMet({ kind: "missile_losses_under", text: "", value: 200, points: 1 }, stats({ missileLosses: 199 })));
-    ok(!objectiveMet({ kind: "missile_losses_under", text: "", value: 200, points: 1 }, stats({ missileLosses: 200 })));
+    const cuneus = (value: number): Objective => objective({ metric: "cuneusKills", compare: "gte", value });
+    const missiles = (value: number): Objective => objective({ metric: "missileLosses", compare: "lt", value });
+    ok(objectiveMet(cuneus(2), stats({ cuneusKills: 2 })));
+    ok(!objectiveMet(cuneus(3), stats({ cuneusKills: 2 })));
+    ok(objectiveMet(missiles(200), stats({ missileLosses: 199 })));
+    ok(!objectiveMet(missiles(200), stats({ missileLosses: 200 })));
   });
 });
 
@@ -68,7 +84,7 @@ describe("applying a result", () => {
 
   it("counts a defeat as an attempt and unlocks nothing", () => {
     const save = freshSave();
-    const out = applyResult(save, { scenarioId: FIRST.id, stats: stats({ won: false }) });
+    const out = applyResult(save, { scenarioId: FIRST.id, stats: stats({}, false) });
     strictEqual(out.pointsEarned, 0);
     strictEqual(out.save.codexUnlocked.length, 0);
     strictEqual(out.save.scenarios[FIRST.id]?.completed, false);

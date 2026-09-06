@@ -25,6 +25,9 @@ const TERRAIN_FILL: Record<Terrain, [string, string]> = {
   forest: ["#0A5C15", "#032B08"],
   hill: ["#6B4227", "#3B2416"],
   rough: ["#3A3A38", "#1E1E1D"],
+  marsh: ["#1E3A34", "#0C1E1B"],
+  road: ["#544636", "#332A20"],
+  cliff: ["#15100D", "#080605"],
 };
 
 const FORM_BADGE: Record<string, string> = { line: "", testudo: "T", cuneus: "W", orbis: "O" };
@@ -67,6 +70,37 @@ function drawTerrainDetail(ctx: CanvasRenderingContext2D, t: Terrain, cx: number
     for (let i = 0; i < 3; i++) {
       ctx.beginPath();
       ctx.ellipse(cx, cy + 6 - i * 5, 18 - i * 5, 7 - i * 2, 0, Math.PI, 2 * Math.PI);
+      ctx.stroke();
+    }
+  } else if (t === "marsh") {
+    // Standing water: flat highlights, no relief, nothing to stand a line on.
+    ctx.strokeStyle = "rgba(140,200,190,0.30)";
+    ctx.lineWidth = 1.1;
+    for (let i = 0; i < 4; i++) {
+      const y = cy - 9 + i * 6;
+      const off = ((seed * 7 + i * 23) % 8) - 4;
+      ctx.beginPath();
+      ctx.moveTo(cx - 15 + off, y);
+      ctx.quadraticCurveTo(cx + off, y - 3, cx + 15 + off, y);
+      ctx.stroke();
+    }
+  } else if (t === "road") {
+    // A made surface, drawn as the one straight line anywhere on the board.
+    ctx.strokeStyle = "rgba(239,203,99,0.22)";
+    ctx.lineWidth = 9;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(cx - 17, cy);
+    ctx.lineTo(cx + 17, cy);
+    ctx.stroke();
+  } else if (t === "cliff") {
+    // Crosshatch, because the one thing this hex has to say is that nothing goes here.
+    ctx.strokeStyle = "rgba(255,255,240,0.16)";
+    ctx.lineWidth = 1;
+    for (let i = -2; i <= 2; i++) {
+      ctx.beginPath();
+      ctx.moveTo(cx - 16, cy + i * 8);
+      ctx.lineTo(cx + 16, cy + i * 8 - 12);
       ctx.stroke();
     }
   } else if (t === "rough") {
@@ -270,6 +304,44 @@ function drawFloaters(ctx: CanvasRenderingContext2D, fx: Effects): void {
 }
 
 /**
+ * Ground the scenario is about: the hexes that have to be held, and the ones
+ * that are a way off the board. Both are fixed for the battle, so they belong
+ * in the terrain layer rather than in the per-frame pass. A scenario won by
+ * standing somewhere has to say where, on the board, without being asked.
+ */
+function drawGoalHexes(ctx: CanvasRenderingContext2D, s: BattleState): void {
+  ctx.save();
+  ctx.setLineDash([7, 5]);
+  ctx.lineWidth = 2.5;
+
+  for (const h of s.scenario.keyHexes ?? []) {
+    const { x, y } = toPixel(h);
+    hexPath(ctx, x, y, HEX_SIZE - 4);
+    ctx.strokeStyle = "rgba(4,99,7,0.95)";
+    ctx.stroke();
+    ctx.fillStyle = "rgba(4,99,7,0.18)";
+    ctx.fill();
+  }
+
+  for (const h of s.scenario.exits ?? []) {
+    const { x, y } = toPixel(h);
+    hexPath(ctx, x, y, HEX_SIZE - 4);
+    ctx.strokeStyle = "rgba(239,203,99,0.95)";
+    ctx.stroke();
+    ctx.fillStyle = "rgba(218,165,32,0.16)";
+    ctx.fill();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(255,255,240,0.85)";
+    ctx.font = "600 13px 'JetBrains Mono', monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("EXIT", x, y);
+    ctx.setLineDash([7, 5]);
+  }
+  ctx.restore();
+}
+
+/**
  * The ground, drawn once per battle instead of once per frame.
  *
  * Terrain does not change while a battle runs, but it was being rebuilt on every
@@ -318,6 +390,7 @@ function terrainLayer(s: BattleState, dpr: number): HTMLCanvasElement {
         drawTerrainDetail(lc, t, x, y, q * 31 + r * 17);
       }
     }
+    drawGoalHexes(lc, s);
   }
   TERRAIN_LAYERS.set(s.scenario, { canvas: layer, dpr });
   return layer;

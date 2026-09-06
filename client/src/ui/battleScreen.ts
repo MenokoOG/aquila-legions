@@ -1,22 +1,29 @@
-import type { Formation, Hex, Scenario } from "../../../shared/types.js";
-import { FORMATION_ORDER } from "../../../shared/data/formations.js";
+import type { CommentariusEntry, Formation, Hex, Scenario } from "../../../shared/types.js";
+import { formationsFor } from "../../../shared/data/formations.js";
 import { boardPixelSize, fromPixel, key } from "../hex.js";
 import {
   type BattleState, type BattleUnit, cloneBattle, createBattle, toStats, unitAt,
 } from "../engine/battle.js";
 import {
   checkOver, endTurn, melee, meleeTargets, movement, moveUnit, pathFrom, pilaTargets,
-  rangedTargets, setFormation, shoot, throwPila,
+  rangedTargets, setFormation, shoot, throwPila, victoryCondition,
 } from "../engine/rules.js";
 import { type Forecast, forecast } from "../engine/forecast.js";
 import { type ThreatMap, threatAt, threatMap } from "../engine/threat.js";
-import { enemyTurn } from "../engine/ai.js";
+import { enemyTurn } from "../engine/ai/index.js";
+import { policyFor } from "../../../shared/data/ai-levels.js";
 import { Effects } from "../effects.js";
+import { type AdvisorHandlers, renderAdvisor } from "./advisorPanel.js";
+import { firedTriggers, noteFromTip } from "../advisor/commentarii.js";
+import { clearToasts, toast } from "./toast.js";
+import { api } from "../api.js";
 import { type Highlights, render, sizeCanvas } from "../render.js";
 import {
   type ActionMode, type DangerView, renderLeftPanel, renderRightPanel, updateDanger, updateInspector,
 } from "./hud.js";
 import { renderBoardBar } from "./boardBar.js";
+import { renderDeployPanel } from "./deployPanel.js";
+import { commitDeployment, inZone, place, stepPlacement, zone } from "../engine/deployment.js";
 import { bindKeys } from "./keys.js";
 import { el, sleep } from "./dom.js";
 import { measure, perfReport } from "../perf.js";
@@ -49,6 +56,15 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
   // Recomputed once per order and reused while the cursor moves, so hovering stays cheap.
   let threat: ThreatMap = new Map();
   const fx = new Effects();
+  /**
+   * Every note already in the Commentarii, so a trigger fires once in a
+   * campaign rather than once a battle. Seeded from the save; failing to reach
+   * the server just means nothing files, and the fight is unaffected.
+   */
+  const filed = new Set<string>();
+  void api.commentarii()
+    .then((entries) => { for (const e of entries) filed.add(e.id); })
+    .catch(() => { /* the notebook is optional; the battle is not */ });
 
   const left = el("aside", { class: "panel left" });
   const canvas = el("canvas", { class: "board" });
@@ -115,6 +131,10 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
       selected: sel, reachable: new Set(), melee: new Set(), ranged: new Set(),
       pila: new Set(), hover: hoverHex, path: [], threat: showThreat ? threat : null,
     };
+    if (s.phase === "deploy") {
+      for (const h of zone(s)) hl.reachable.add(key(h));
+      return hl;
+    }
     if (sel && ours(sel)) {
       // One walk of the board answers both "where can it go" and "how would it get
       // there". Asking for the reachable set and then the route used to walk it twice,
@@ -178,7 +198,14 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
   /** Every order can open or close a lane, so the enemy's reach is re-read after each one. */
   function refreshThreat(): void {
     threat = measure("threat", () => threatMap(s, "enemy"));
-    renderBoardBar(bar, { showThreat, threatened: threat.size, perf: perfReport() }, () => toggleThreat());
+    renderBoardBar(bar, {
+      showThreat,
+      threatened: threat.size,
+      enemyAdjective: s.campaign.enemy.adjective,
+      hasKeyHexes: (scenario.keyHexes?.length ?? 0) > 0,
+      hasExits: (scenario.exits?.length ?? 0) > 0,
+      perf: perfReport(),
+    }, () => toggleThreat());
   }
 
   function toggleThreat(): void {
@@ -190,6 +217,19 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
     if (selectedId && !s.units.some((u) => u.id === selectedId)) selectedId = null;
     refreshThreat();
     drawBoard();
+    if (s.phase === "deploy") {
+      renderDeployPanel(left, s, selectedId, {
+        onSelect: (id) => { selectedId = id; drawAll(); },
+        onStep: (id, dir) => {
+          const u = s.units.find((x) => x.id === id);
+          if (u) { selectedId = id; stepPlacement(s, u, dir); }
+          drawAll();
+        },
+        onCommit: () => { if (commitDeployment(s)) { selectedId = null; drawAll(); } },
+      });
+      renderRightPanel(right, s, view());
+      return;
+    }
     renderLeftPanel(left, s, view(), {
       onFormation: (f: Formation) => applyFormation(f),
       onMode: (m) => { mode = m; drawAll(); },
@@ -200,6 +240,38 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
       onLesson: () => showLesson(),
     });
     renderRightPanel(right, s, view());
+    renderAdvisor(right, s, advisorHandlers);
+    checkTriggers();
+  }
+
+  const advisorHandlers: AdvisorHandlers = {
+    kept: filed,
+    onFocus: (unitId) => { selectedId = unitId; mode = "attack"; drawAll(); },
+    onKeep: (tip) => { void keep(noteFromTip(s, tip)); },
+  };
+
+  /** Files a note and shows it. Never blocks a turn: a failure is silent. */
+  async function keep(entry: CommentariusEntry): Promise<void> {
+    if (filed.has(entry.id)) return;
+    filed.add(entry.id);
+    try {
+      await api.file([entry]);
+      drawAll();
+    } catch {
+      filed.delete(entry.id);
+    }
+  }
+
+  /**
+   * Notes that fire the moment the thing happens, while the board still shows
+   * what the sentence is about. Undo does not unfile one: it did happen.
+   */
+  function checkTriggers(): void {
+    for (const note of firedTriggers(s, filed)) {
+      filed.add(note.id);
+      toast(note.title, note.body);
+      void api.file([note]).catch(() => filed.delete(note.id));
+    }
   }
 
   function startAnimation(): void {
@@ -242,6 +314,17 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
     if (!hx) return;
     const target = unitAt(s, hx);
 
+    // Setting the line out: a click picks a unit up or puts the held one down.
+    if (s.phase === "deploy") {
+      if (target && target.side === "player") selectedId = target.id;
+      else {
+        const held = selected();
+        if (held && inZone(s, hx)) place(s, held, hx);
+      }
+      drawAll();
+      return;
+    }
+
     if (target && target.side === "player") {
       selectedId = target.id;
       mode = "attack";
@@ -269,10 +352,10 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
     else history.pop();
   });
 
-  /** Tab through your own units that still have orders left. */
+  /** Tab through your own units that still have orders left, or all of them while deploying. */
   function selectNext(): void {
     if (busy || s.over || s.active !== "player") return;
-    const ready = s.units.filter((u) => u.side === "player" && !u.acted);
+    const ready = s.units.filter((u) => u.side === "player" && (s.phase === "deploy" || !u.acted));
     if (!ready.length) return;
     const at = ready.findIndex((u) => u.id === selectedId);
     selectedId = ready[(at + 1) % ready.length]!.id;
@@ -281,12 +364,19 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
   }
 
   const unbindKeys = bindKeys({
-    endTurn: () => { void runEnemyTurn(); },
+    // While the line is being set out, Enter sets it rather than ending a turn.
+    endTurn: () => {
+      if (s.phase === "deploy") {
+        if (commitDeployment(s)) { selectedId = null; drawAll(); }
+        return;
+      }
+      void runEnemyTurn();
+    },
     undo: () => undo(),
     next: () => selectNext(),
     deselect: () => { selectedId = null; mode = "attack"; drawAll(); },
     formation: (i) => {
-      const f = FORMATION_ORDER[i];
+      const f = formationsFor(scenario.formations)[i];
       if (f && selected()?.tmpl.canFormation) applyFormation(f);
     },
     attackMode: () => { if (ours(selected())) { mode = "attack"; drawAll(); } },
@@ -299,7 +389,7 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
   });
 
   async function runEnemyTurn(): Promise<void> {
-    if (busy || s.over || s.active !== "player") return;
+    if (busy || s.over || s.active !== "player" || s.phase === "deploy") return;
     busy = true;
     // The enemy turn is the commit point: what is done cannot be taken back.
     history = [];
@@ -358,11 +448,25 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
     ]);
   }
 
+  const enemyPolicy = policyFor(scenario.ai);
+
   function showLesson(): void {
     showModal(scenario.title, el("div", {},
       el("p", { class: "muted", text: `${scenario.year} · ${scenario.place}` }),
       el("p", { text: scenario.briefing }),
       el("div", { class: "lesson-box" }, el("h3", { text: `Lesson: ${scenario.tactic}` }), el("p", { text: scenario.lesson })),
+      el("div", { class: "lesson-box" },
+        el("h3", { text: "How this one is won" }),
+        el("p", { text: victoryCondition(s).text }),
+        (scenario.keyHexes?.length ?? 0) > 0
+          ? el("p", { class: "muted small", text: "The green ground on the board is what has to be held when the fighting stops." })
+          : null,
+        (scenario.exits?.length ?? 0) > 0
+          ? el("p", { class: "muted small", text: "A unit that ends its move on a gold EXIT hex walks off the board and is safe." })
+          : null,
+      ),
+      el("h3", { text: `Opposite you: ${enemyPolicy.name}` }),
+      el("p", { class: "muted small", text: enemyPolicy.blurb }),
       el("h3", { text: "Objectives" }),
       ...scenario.objectives.map((o) => el("div", { class: "objective" }, el("span", { class: "pts", text: `+${o.points}` }), o.text)),
       el("h3", { text: "Reading the board" }),
@@ -375,7 +479,7 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
   drawAll();
   showLesson();
 
-  return () => unbindKeys();
+  return () => { unbindKeys(); clearToasts(); };
 }
 
 export { toStats };
