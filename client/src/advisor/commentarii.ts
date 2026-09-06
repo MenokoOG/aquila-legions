@@ -48,6 +48,19 @@ export function noteFromTip(s: BattleState, tip: Tip): CommentariusEntry {
   };
 }
 
+/** The prefect's own words, kept. */
+export function noteFromCounsel(s: BattleState, text: string): CommentariusEntry {
+  return {
+    id: `counsel:${s.scenario.id}:${s.turn}`,
+    source: "tip",
+    title: `The Praefectus at ${s.scenario.title}, turn ${s.turn}`,
+    body: text,
+    tags: ["praefectus", "counsel"],
+    scenarioId: s.scenario.id,
+    at: new Date().toISOString(),
+  };
+}
+
 /** Every tag in the notebook, most used first, for the filter row. */
 export function tagsOf(entries: readonly CommentariusEntry[]): string[] {
   const counts = new Map<string, number>();

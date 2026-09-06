@@ -6,6 +6,30 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added — the Praefectus borrows a voice (optional, off by default)
+
+The local adviser is correct, free and instant, and it reads like a rules engine, because it is one. With an `OPENAI_API_KEY` in the environment, a button in the panel asks a model to say the same thing in the voice of a camp prefect.
+
+**Facts in, prose out.** `client/src/advisor/tips.ts` decides what is true. The model is sent those already-true sentences and nothing else — not the board, not the rules, not the save, not the commander's name — and is instructed to assert nothing it was not handed. It picks the one or two that matter this turn and phrases them. It never writes history and never gives orders.
+
+That constraint is not about model size. A larger model invents Roman history more fluently, not less, and every Codex statement in this game is meant to be checkable in Tacitus, Dio, Vegetius, Josephus, Caesar or on Trajan's Column. Generated history would quietly void the only claim the project makes, and nobody would notice — which is what makes it the failure worth designing against. See `docs/adr/0005-counsel-is-voice-only-and-optional.md`.
+
+- `POST /api/counsel`. No key: 501, `GET /api/state` reports `counsel: false`, and the client never builds a button that cannot work.
+- `gpt-5.6-luna` on the Responses API, about $0.00015 a call at roughly 400 in and 60 out. `COUNSEL_MODEL` and `COUNSEL_URL` override the model and the endpoint — the second is how the whole path is tested against a stub, and how you would point it at a local model server instead.
+- **No new dependency.** One endpoint, one POST, `fetch`. `express` is still the only runtime dependency.
+- Six-second timeout, zero retries, one call per turn, fired by a button, never automatically. The advice clears when the turn ends, because it was about the board as it stood.
+- The reply is rendered with `textContent` and cut at 400 characters. Model output never touches `innerHTML`.
+
+**Failure is the default rendering.** The local tips are what the panel shows — before the request, during it, and after it fails. Counsel appears beneath them when it arrives. There is no state in which a turn waits on the network, and none in which a failure costs anything but the phrasing.
+
+### Changed
+
+- **The README no longer says nothing leaves your machine**, because with a key that is not true. It says the game is fully playable with no key and no network, and that one optional button sends this turn's already-computed advice to be rephrased. This is the change that made the old sentence a lie, so it is the change that carries the ADR.
+
+### Added
+
+- `test/counsel.test.ts`: 18 tests, none of which call the real API — every one injects a fetcher. No key, empty facts, a refused status, a dead network, a timeout, four reply shapes nobody expected, and an assertion that no field of the save travels with the ask. 188 pass.
+
 ### Added — Britannia: the Boudican Revolt
 
 A second era, six battles, 60 to 61 AD. It unlocks when the Dacian Wars are finished, and the campaign screen now has a tab per era.

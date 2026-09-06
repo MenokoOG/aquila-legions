@@ -6,6 +6,7 @@ import { CODEX } from "../shared/data/codex.js";
 import { SaveStore } from "./store.js";
 import { applyResult, isCampaignUnlocked, isUnlocked, sanitizeStats } from "./progress.js";
 import { file, toMarkdown } from "./commentarii.js";
+import { counsel, counselAvailable, readRequest } from "./counsel.js";
 
 /** REST surface. All game rules live in progress.ts; this file only routes. */
 export function buildRouter(store: SaveStore): Router {
@@ -20,7 +21,9 @@ export function buildRouter(store: SaveStore): Router {
       record: save.scenarios[s.id] ?? null,
     }));
     const campaigns = CAMPAIGNS.map((c) => ({ ...c, unlocked: isCampaignUnlocked(save, c.id) }));
-    res.json({ save, campaigns, scenarios });
+    // Whether a key is configured, so the client can hide a button that cannot
+    // work. Never the key itself, and never anything derived from it.
+    res.json({ save, campaigns, scenarios, counsel: counselAvailable() });
   });
 
   router.get("/scenario/:id", (req, res) => {
@@ -68,6 +71,19 @@ export function buildRouter(store: SaveStore): Router {
     const added = file(save, body?.entries);
     if (added.length) store.save(save);
     return res.json({ added, commentarii: save.commentarii });
+  });
+
+  /**
+   * The one route in this game that leaves the machine, and the only one that
+   * is optional. Without a key it answers 501 and the game is unaffected.
+   */
+  router.post("/counsel", async (req, res) => {
+    if (!counselAvailable()) return res.status(501).json({ error: "no counsel configured" });
+    const ask = readRequest(req.body);
+    if (!ask) return res.status(400).json({ error: "facts required" });
+    const out = await counsel(ask);
+    if (!out) return res.status(503).json({ error: "no word from the Praefectus" });
+    return res.json(out);
   });
 
   router.post("/commander", (req, res) => {

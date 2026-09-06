@@ -8,7 +8,7 @@ A local, single-player hex-tactics game about commanding Roman legions. Two camp
 
 Win a battle and the history behind its tactic unlocks in the Codex. History points and rank persist between sessions.
 
-Nothing leaves your machine. The server is a small Express API on localhost that keeps one JSON save file.
+The server is a small Express API on localhost that keeps one JSON save file. **Nothing leaves your machine unless you give it a key**: there is one optional feature, described below, that does — it is off by default, and the whole game is playable without it.
 
 ## Run it
 
@@ -35,7 +35,7 @@ Then open http://localhost:3117.
 - Cohorts carry pila. Select "Throw pila" and click an adjacent enemy. Once per battle, no retaliation. Throw first, then fight.
 - A unit that drops under a quarter of its men routs. Flanked units (two or more enemies adjacent) take extra damage; Orbis cannot be flanked.
 - The objective list tracks itself as you play, so you can see the lesson landing or slipping before the battle is over.
-- The Praefectus panel on the right says the two or three things an officer would mention: form the tortoise, throw before you draw, that charge gets you broken, the horse arrives next turn. Press **Keep** on one to file it in your Commentarii.
+- The Praefectus panel on the right says the two or three things an officer would mention: form the tortoise, throw before you draw, that charge gets you broken, the horse arrives next turn. Press **Keep** on one to file it in your Commentarii. All of it is computed on your machine from the same formulas the forecast panel shows.
 - Undo takes back orders within your own turn. Ending the turn commits: the Dacians move, and the dice are not re-rollable.
 - Clearing the field is only one way to win. A battle may be won by lasting to the turn limit, by getting units off a marked exit, or by holding marked ground when the fighting stops. The briefing says which, and the board draws it: dashed green is ground to hold, gold is a way off the board.
 - Some battles start by choosing where to stand. Deployment costs nothing and can be redone as often as you like; nothing moves until you set the line.
@@ -104,9 +104,27 @@ npm run bench   # timings for the hot paths behind a mouse move
 
 For drawing cost, which Node cannot measure, open the battle screen with `?perf=1` (for example http://localhost:3117/?perf=1). The strip under the board then reports median and p95 for the board repaint and the threat map.
 
+## The Praefectus's voice (optional, off by default, costs money)
+
+The advice above is written by a rules engine, and it reads like one. If you want it in the voice of a camp prefect, set an OpenAI key and a button appears in the panel:
+
+```bash
+# .env, which is git-ignored. The key is yours to place; nothing else touches it.
+OPENAI_API_KEY=sk-...
+```
+
+**What it is allowed to do is narrow on purpose.** The local adviser decides what is *true*; the model only decides how it *sounds*. It is sent this turn's already-computed advice and nothing else — not the board, not the rules, not your save, not your name — and it is instructed to assert nothing it was not handed. It never writes history and it never gives orders.
+
+That constraint is not about model size. A bigger model invents Roman history more fluently, not less, and every Codex statement in this game is meant to be checkable in Tacitus, Dio, Vegetius, Josephus or on Trajan's Column. Generated history would quietly void the one claim the project makes. See `docs/adr/0005-counsel-is-voice-only-and-optional.md`.
+
+- One call per turn, fired by a button, never automatically. Six-second timeout, no retries.
+- Model: `gpt-5.6-luna` on the Responses API, roughly $0.00015 a call. Override with `COUNSEL_MODEL`.
+- Endpoint: override with `COUNSEL_URL` — which is also how you point it at a local model server instead.
+- No key, a timeout, a rate limit, or anything unexpected: the button is not built, or the panel says so, and the local advice stands. A turn never waits on the network.
+
 ## Dependencies
 
-Runtime: `express`. Dev: `vite`, `typescript`, `tsx`, `concurrently`, and the matching type packages. No database, no native modules.
+Runtime: `express`, and nothing else — the optional counsel above is one `fetch` against one endpoint, not an SDK. Dev: `vite`, `typescript`, `tsx`, `concurrently`, and the matching type packages. No database, no native modules.
 
 ## Accuracy note
 

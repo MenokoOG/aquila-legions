@@ -85,13 +85,19 @@ async function showCommentarii(): Promise<void> {
 
 async function startBattle(id: string): Promise<void> {
   try {
-    const scenario = (await api.scenario(id).catch(() => SCENARIO_BY_ID[id])) ?? SCENARIO_BY_ID[id];
+    // The scenario, and whether this machine has the optional counsel configured.
+    // Both are local; asking for them together costs one round trip.
+    const [scenario, counsel] = await Promise.all([
+      api.scenario(id).catch(() => SCENARIO_BY_ID[id]),
+      api.state().then((st) => st.counsel === true).catch(() => false),
+    ]);
     if (!scenario) throw new Error("scenario not found");
     swap();
     setNav(el("span", { class: "pill", text: scenario.title }));
     dispose = mountBattle(screen, scenario, {
       onFinished: (state) => void submit(state),
       onWithdraw: () => void showMenu(),
+      counsel,
     });
     window.scrollTo(0, 0);
   } catch (err) {

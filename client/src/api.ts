@@ -23,10 +23,22 @@ export type CampaignView = Campaign & { unlocked?: boolean };
 export interface StateResponse {
   save: SaveState;
   campaigns: CampaignView[];
+  /** Whether the optional Praefectus counsel route is configured on this machine. */
+  counsel?: boolean;
   scenarios: ScenarioSummary[];
 }
 
 export type CodexView = CodexEntry & { unlocked: boolean };
+
+/** What the counsel route is given: things the local adviser has already found to be true. */
+export interface CounselAsk {
+  title: string;
+  tactic: string;
+  turn: number;
+  maxTurns: number;
+  enemy: string;
+  facts: string[];
+}
 
 async function json<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, { headers: { "content-type": "application/json" }, ...init });
@@ -44,6 +56,8 @@ export const api = {
   result: (scenarioId: string, stats: BattleStats) =>
     json<ResultResponse>("/api/battle/result", { method: "POST", body: JSON.stringify({ scenarioId, stats }) }),
   commentarii: () => json<CommentariusEntry[]>("/api/commentarii"),
+  counsel: (body: CounselAsk) =>
+    json<{ text: string; model: string }>("/api/counsel", { method: "POST", body: JSON.stringify(body) }),
   file: (entries: CommentariusEntry[]) =>
     json<{ added: CommentariusEntry[]; commentarii: CommentariusEntry[] }>("/api/commentarii", {
       method: "POST", body: JSON.stringify({ entries }),
