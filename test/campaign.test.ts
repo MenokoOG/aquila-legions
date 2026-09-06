@@ -97,7 +97,7 @@ describe("a whole battle", () => {
         endTurn(s);
       }
       ok(s.over, `${scenario.id} never reached a decision`);
-      const stats = toStats(s);
+      const stats = toStats(s).metrics;
       ok(stats.turns >= 1, `${scenario.id} recorded no turns`);
       ok(stats.playerLosses + stats.enemyLosses > 0, `${scenario.id} was fought without a casualty`);
       ok(unitsOf(s, "player").length === 0 || unitsOf(s, "enemy").length === 0 || stats.turns > scenario.maxTurns,

@@ -4,7 +4,7 @@ import { SCENARIOS } from "../shared/data/scenarios.js";
 import { CAMPAIGNS } from "../shared/data/campaigns.js";
 import { CODEX } from "../shared/data/codex.js";
 import { SaveStore } from "./store.js";
-import { applyResult, isUnlocked } from "./progress.js";
+import { applyResult, isUnlocked, sanitizeStats } from "./progress.js";
 
 /** REST surface. All game rules live in progress.ts; this file only routes. */
 export function buildRouter(store: SaveStore): Router {
@@ -41,7 +41,7 @@ export function buildRouter(store: SaveStore): Router {
     const save = store.load();
     if (!isUnlocked(save, body.scenarioId)) return res.status(403).json({ error: "scenario locked" });
     try {
-      const out = applyResult(save, { scenarioId: body.scenarioId, stats: body.stats });
+      const out = applyResult(save, { scenarioId: body.scenarioId, stats: sanitizeStats(body.stats) });
       store.save(out.save);
       return res.json(out);
     } catch (err) {

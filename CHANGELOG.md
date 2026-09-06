@@ -6,6 +6,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed — an objective is a comparison against a metric
+
+`Objective` carried a `kind` from a closed union and two files switched over it: the sidebar's live readout in `client/src/engine/objectives.ts`, and the scoring in `server/progress.ts`. Nine cases, written twice, in different packages, with nothing that would fail if the two ever disagreed about what "met" meant. Both switches are gone. See `docs/adr/0003-objectives-are-metric-comparisons.md`.
+
+- A battle now publishes a `MetricBag` — every number it measures, by name. `metrics()` in `client/src/engine/battle.ts` builds it, and the same bag answers the live panel mid-battle and the server's scoring at the end, so the two cannot drift.
+- `Objective` is `{ id, text, metric, compare, value?, points, hint, outstanding? }`, with `compare` one of `victory`, `gte`, `lt`, `zero`. `shared/objectives.ts` is the only judge, imported by both packages.
+- The after-action hint moved out of a branch in the client and into the scenario data, beside the objective text it explains. `shared/data/scenarios.ts` builds its objectives from named helpers, so the hint for a lesson several battles teach is written once.
+- **Saves are untouched.** Objective ids are the old `kind` strings exactly, and `objectivesMet` already held those strings, so every objective a player had earned is still earned.
+- `BattleStats` is `{ won, metrics }` rather than thirteen named fields. It arrives over HTTP, so `sanitizeStats` now fills it out and cleans it the way `sanitizeSave` already treats the save file: whole, non-negative, and nothing the game does not measure.
+- The pila objective used to go green once every cohort had thrown, counting cohorts that had already died. It counts standing cohorts that have yet to throw, and its readout says how many are left rather than how many have gone.
+
+### Added
+
+- `test/objective-metrics.test.ts`: 10 tests over the comparator, the shape of every shipped objective, and a posted battle report full of things a battle could not have produced. 105 pass.
+
 ### Changed — the Baroque skin
 
 The battle screen was redesigned, and the same stylesheet carries the menu, codex and modals so nothing is left unstyled. Light parchment out, midnight ground in: deep crimson for Rome, royal gold for rules and labels, royal purple for Dacia, emerald for an objective met. Type is Cinzel Decorative for display, Cinzel for body, JetBrains Mono for every number. Implemented from `docs/design_handoff_baroque_battle_screen/`, which is committed alongside as the reference.

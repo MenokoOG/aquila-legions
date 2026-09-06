@@ -1,27 +1,13 @@
 import type {
-  BattleResult, BattleStats, CodexEntry, Objective, ObjectiveKind, ResultResponse, SaveState,
-  ScenarioRecord,
+  BattleResult, BattleStats, CodexEntry, MetricBag, ResultResponse, SaveState, ScenarioRecord,
 } from "../shared/types.js";
+import { objectiveMet } from "../shared/objectives.js";
+import { METRIC_KEYS } from "../shared/data/metrics.js";
 import { SCENARIO_BY_ID, SCENARIOS } from "../shared/data/scenarios.js";
 import { CODEX, CODEX_BY_ID } from "../shared/data/codex.js";
 import { RANKS } from "../shared/data/ranks.js";
 
-/** Pure progression rules: which objectives a battle met, points, codex unlocks, rank. */
-
-export function objectiveMet(o: Objective, s: BattleStats): boolean {
-  const v = o.value ?? 0;
-  switch (o.kind) {
-    case "win": return s.won;
-    case "pila_before_melee": return s.won && s.pilaBeforeMelee;
-    case "missile_losses_under": return s.won && s.missileLosses < v;
-    case "cuneus_kills": return s.won && s.cuneusKills >= v;
-    case "flank_kills": return s.won && s.flankKills >= v;
-    case "no_cohort_routed": return s.won && s.cohortsRouted === 0;
-    case "testudo_under_fire": return s.won && s.testudoTurnsUnderFire >= v;
-    case "orbis_held": return s.won && s.orbisHeldTurns >= v;
-    case "cavalry_kills": return s.won && s.cavalryKills >= v;
-  }
-}
+/** Pure progression rules: points, codex unlocks, rank. Objectives are judged in `shared/objectives.ts`. */
 
 export function rankFor(points: number): string {
   let title = RANKS[0]?.title ?? "Tiro (Recruit)";
@@ -42,8 +28,9 @@ export function freshSave(): SaveState {
   };
 }
 
-const OBJECTIVE_KINDS = new Set<string>(
-  SCENARIOS.flatMap((s) => s.objectives.map((o) => o.kind as string)),
+/** Every objective id the shipped scenarios use. Anything else in a save is dropped. */
+const OBJECTIVE_IDS = new Set<string>(
+  SCENARIOS.flatMap((s) => s.objectives.map((o) => o.id)),
 );
 
 function count(v: unknown): number {
@@ -53,13 +40,25 @@ function count(v: unknown): number {
 function record(raw: unknown, scenarioId: string): ScenarioRecord | null {
   if (!SCENARIO_BY_ID[scenarioId] || typeof raw !== "object" || raw === null) return null;
   const r = raw as Partial<ScenarioRecord>;
-  const kinds = Array.isArray(r.objectivesMet) ? r.objectivesMet : [];
+  const met = Array.isArray(r.objectivesMet) ? r.objectivesMet : [];
   return {
     completed: r.completed === true,
     bestPoints: count(r.bestPoints),
     attempts: count(r.attempts),
-    objectivesMet: [...new Set(kinds.filter((k): k is ObjectiveKind => typeof k === "string" && OBJECTIVE_KINDS.has(k)))],
+    objectivesMet: [...new Set(met.filter((id): id is string => typeof id === "string" && OBJECTIVE_IDS.has(id)))],
   };
+}
+
+/**
+ * The battle report arrives over HTTP, so it is read the same way the save file
+ * is: every metric is present, whole and non-negative, whatever was posted.
+ */
+export function sanitizeStats(raw: unknown): BattleStats {
+  const r = (typeof raw === "object" && raw !== null ? raw : {}) as Partial<BattleStats>;
+  const posted = (typeof r.metrics === "object" && r.metrics !== null ? r.metrics : {}) as Partial<MetricBag>;
+  const metrics = {} as MetricBag;
+  for (const k of METRIC_KEYS) metrics[k] = count(posted[k]);
+  return { won: r.won === true, metrics };
 }
 
 /**
@@ -109,19 +108,19 @@ export function applyResult(save: SaveState, result: BattleResult): ResultRespon
   record.attempts += 1;
   save.battles += 1;
 
-  const met: ObjectiveKind[] = [];
+  const met: string[] = [];
   let points = 0;
   for (const o of scenario.objectives) {
     if (objectiveMet(o, result.stats)) {
-      met.push(o.kind);
+      met.push(o.id);
       points += o.points;
     }
   }
 
   // Points are awarded once per objective per scenario. Replays only earn newly met objectives.
-  const newlyMet = met.filter((k) => !record.objectivesMet.includes(k));
+  const newlyMet = met.filter((id) => !record.objectivesMet.includes(id));
   const earned = scenario.objectives
-    .filter((o) => newlyMet.includes(o.kind))
+    .filter((o) => newlyMet.includes(o.id))
     .reduce((sum, o) => sum + o.points, 0);
 
   record.objectivesMet = Array.from(new Set([...record.objectivesMet, ...met]));

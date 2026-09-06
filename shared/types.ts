@@ -99,22 +99,62 @@ export interface UnitPlacement {
   label?: string;
 }
 
-export type ObjectiveKind =
-  | "win"
-  | "pila_before_melee"
-  | "missile_losses_under"
-  | "cuneus_kills"
-  | "flank_kills"
-  | "no_cohort_routed"
-  | "testudo_under_fire"
-  | "orbis_held"
-  | "cavalry_kills";
+/**
+ * The numbers a battle keeps about itself. An objective is a comparison against
+ * one of these, which is why neither the engine nor the server holds a switch
+ * over objective names any more.
+ *
+ * Like `Formation`, this is written out rather than derived: deriving it would
+ * make this file depend on the engine, and that inversion is worse than one
+ * line per new measurement.
+ */
+export type Metric =
+  | "enemiesLeft"
+  | "playerLosses"
+  | "enemyLosses"
+  | "missileLosses"
+  | "cuneusKills"
+  | "flankKills"
+  | "cavalryKills"
+  | "cohortsRouted"
+  | "testudoTurnsUnderFire"
+  | "orbisHeldTurns"
+  | "cohortsYetToThrow"
+  | "pilaSkipped"
+  | "turns";
+
+/** Every metric a battle measured, whether or not an objective asks about it. */
+export type MetricBag = Record<Metric, number>;
+
+/**
+ * How an objective reads its metric. `victory` is the one that is not a number:
+ * clearing the field is the win condition itself, and every other objective is
+ * scored only in a battle that was won.
+ */
+export type Compare = "victory" | "gte" | "lt" | "zero";
 
 export interface Objective {
-  kind: ObjectiveKind;
+  /**
+   * Stable, persisted in the save as proof this objective was met. Never reuse
+   * an id for a different test, and never rename one that has shipped.
+   */
+  id: string;
   text: string;
+  metric: Metric;
+  compare: Compare;
+  /** The number `gte` and `lt` compare against. Unused by `victory` and `zero`. */
   value?: number;
   points: number;
+  /** Shown in the after-action review when the objective was missed. */
+  hint: string;
+  /**
+   * Work still to do before a `zero` objective can be called met, as a metric
+   * that counts down. Without one, staying clean is only settled when the
+   * battle ends; with one, reaching zero settles it early. It is also what the
+   * live readout counts, since a failure metric sitting at zero says nothing
+   * about how far along you are.
+   */
+  outstanding?: Metric;
 }
 
 export interface Scenario {
@@ -147,17 +187,7 @@ export interface CodexEntry {
 
 export interface BattleStats {
   won: boolean;
-  turns: number;
-  playerLosses: number;
-  enemyLosses: number;
-  pilaBeforeMelee: boolean;
-  missileLosses: number;
-  cuneusKills: number;
-  flankKills: number;
-  cavalryKills: number;
-  cohortsRouted: number;
-  testudoTurnsUnderFire: number;
-  orbisHeldTurns: number;
+  metrics: MetricBag;
 }
 
 export interface BattleResult {
@@ -169,7 +199,8 @@ export interface ScenarioRecord {
   completed: boolean;
   bestPoints: number;
   attempts: number;
-  objectivesMet: ObjectiveKind[];
+  /** Objective ids, not names. See `Objective.id`. */
+  objectivesMet: string[];
 }
 
 export interface SaveState {
@@ -186,7 +217,7 @@ export interface SaveState {
 export interface ResultResponse {
   save: SaveState;
   pointsEarned: number;
-  objectivesMet: ObjectiveKind[];
+  objectivesMet: string[];
   newCodex: CodexEntry[];
   rankUp: string | null;
 }

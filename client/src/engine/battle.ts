@@ -1,5 +1,6 @@
 import type {
-  BattleStats, Campaign, Faction, Formation, Hex, Scenario, Side, Terrain, UnitPlacement, UnitTemplate,
+  BattleStats, Campaign, Faction, Formation, Hex, MetricBag, Scenario, Side, Terrain, UnitPlacement,
+  UnitTemplate,
 } from "../../../shared/types.js";
 import type { UnitKind } from "../../../shared/data/units.js";
 import { UNITS } from "../../../shared/data/units.js";
@@ -196,14 +197,17 @@ export function createBattle(scenario: Scenario): BattleState {
   return state;
 }
 
-export function toStats(s: BattleState): BattleStats {
+/**
+ * Everything the fight has measured about itself, in the shape objectives are
+ * written against. The same bag answers the live objective panel mid-battle and
+ * the server's scoring at the end, so the two can never drift.
+ */
+export function metrics(s: BattleState): MetricBag {
   const t = s.track;
   return {
-    won: s.over?.won ?? false,
-    turns: s.turn,
+    enemiesLeft: unitsOf(s, "enemy").length,
     playerLosses: t.playerLosses,
     enemyLosses: t.enemyLosses,
-    pilaBeforeMelee: !t.pilaViolated,
     missileLosses: t.missileLosses,
     cuneusKills: t.cuneusKills,
     flankKills: t.flankKills,
@@ -211,5 +215,12 @@ export function toStats(s: BattleState): BattleStats {
     cohortsRouted: t.cohortsRouted,
     testudoTurnsUnderFire: t.testudoTurnsUnderFire,
     orbisHeldTurns: t.orbisHeldTurns,
+    cohortsYetToThrow: unitsOf(s, "player").filter((u) => isCore(u) && !t.cohortsThrown.has(u.id)).length,
+    pilaSkipped: t.pilaViolated ? 1 : 0,
+    turns: s.turn,
   };
+}
+
+export function toStats(s: BattleState): BattleStats {
+  return { won: s.over?.won ?? false, metrics: metrics(s) };
 }

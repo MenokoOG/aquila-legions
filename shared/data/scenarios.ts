@@ -1,4 +1,4 @@
-import type { Scenario, Terrain } from "../types.js";
+import type { Objective, Scenario, Terrain } from "../types.js";
 
 function terrain(spec: Partial<Record<Terrain, [number, number][]>>): Record<string, Terrain> {
   const out: Record<string, Terrain> = {};
@@ -7,6 +7,60 @@ function terrain(spec: Partial<Record<Terrain, [number, number][]>>): Record<str
   }
   return out;
 }
+
+/**
+ * The objectives this campaign uses, as builders rather than as repeated object
+ * literals. An objective is a comparison against a metric plus the sentence the
+ * after-action review shows when it was missed, and several scenarios ask for
+ * the same lesson, so the hint is written once here.
+ *
+ * The `id` of each is what the save file records. Never change one that has
+ * shipped: a renamed id reads as an objective the player has not met.
+ */
+const win = (text: string, points: number): Objective => ({
+  id: "win", text, metric: "enemiesLeft", compare: "victory", points,
+  hint: "Rout or destroy every Dacian unit before the turn limit. A unit breaks once it falls under a quarter of its men.",
+});
+
+const pilaFirst = (text: string, points: number): Objective => ({
+  id: "pila_before_melee", text, metric: "pilaSkipped", compare: "zero", outstanding: "cohortsYetToThrow", points,
+  hint: "Throw pila at an adjacent enemy before that cohort ever swings a gladius. One cohort skipping the volley fails it for the whole battle.",
+});
+
+const noCohortRouted = (text: string, points: number): Objective => ({
+  id: "no_cohort_routed", text, metric: "cohortsRouted", compare: "zero", points,
+  hint: "Pull a battered cohort out of contact before it drops under a quarter strength. Auxiliaries routing does not count against you.",
+});
+
+const missileLossesUnder = (text: string, value: number, points: number): Objective => ({
+  id: "missile_losses_under", text, metric: "missileLosses", compare: "lt", value, points,
+  hint: "Form testudo before you walk into bow range, and drop back to line only once you are past it.",
+});
+
+const cuneusKills = (text: string, value: number, points: number): Objective => ({
+  id: "cuneus_kills", text, metric: "cuneusKills", compare: "gte", value, points,
+  hint: "Set a cohort to cuneus (wedge) and let that cohort land the blow that breaks the enemy unit.",
+});
+
+const flankKills = (text: string, value: number, points: number): Objective => ({
+  id: "flank_kills", text, metric: "flankKills", compare: "gte", value, points,
+  hint: "Get two units adjacent to the same enemy, then break it. Orbis cannot be flanked.",
+});
+
+const cavalryKills = (text: string, value: number, points: number): Objective => ({
+  id: "cavalry_kills", text, metric: "cavalryKills", compare: "gte", value, points,
+  hint: "Let the ala land the killing blow. Charge two or more hexes for the bonus, and go around the flank rather than into the front.",
+});
+
+const testudoUnderFire = (text: string, value: number, points: number): Objective => ({
+  id: "testudo_under_fire", text, metric: "testudoTurnsUnderFire", compare: "gte", value, points,
+  hint: "End your turn with a cohort in testudo while Dacian archers can still reach it. Each such cohort-turn counts once.",
+});
+
+const orbisHeld = (text: string, value: number, points: number): Objective => ({
+  id: "orbis_held", text, metric: "orbisHeldTurns", compare: "gte", value, points,
+  hint: "End your turn with a cohort in orbis and horsemen adjacent to it. Orbis cannot move, so form it where the charge will arrive.",
+});
 
 const W = 14;
 const H = 10;
@@ -30,8 +84,8 @@ export const SCENARIOS: Scenario[] = [
       { kind: "warband", at: { q: 11, r: 5 } },
     ],
     objectives: [
-      { kind: "win", text: "Clear the field", points: 100 },
-      { kind: "no_cohort_routed", text: "No legionary cohort routs", points: 50 },
+      win("Clear the field", 100),
+      noCohortRouted("No legionary cohort routs", 50),
     ],
     unlocksCodex: ["legion_structure", "marching_camp"],
   },
@@ -54,8 +108,8 @@ export const SCENARIOS: Scenario[] = [
       { kind: "warband", at: { q: 9, r: 7 } },
     ],
     objectives: [
-      { kind: "win", text: "Clear the field", points: 100 },
-      { kind: "pila_before_melee", text: "Every cohort throws its pila before it fights in melee", points: 75 },
+      win("Clear the field", 100),
+      pilaFirst("Every cohort throws its pila before it fights in melee", 75),
     ],
     unlocksCodex: ["pilum"],
   },
@@ -83,9 +137,9 @@ export const SCENARIOS: Scenario[] = [
       { kind: "warband", at: { q: 11, r: 5 } },
     ],
     objectives: [
-      { kind: "win", text: "Clear the pass", points: 100 },
-      { kind: "missile_losses_under", text: "Lose fewer than 150 men to arrows", value: 150, points: 75 },
-      { kind: "testudo_under_fire", text: "Spend at least 3 cohort-turns in Testudo while under fire", value: 3, points: 50 },
+      win("Clear the pass", 100),
+      missileLossesUnder("Lose fewer than 150 men to arrows", 150, 75),
+      testudoUnderFire("Spend at least 3 cohort-turns in Testudo while under fire", 3, 50),
     ],
     unlocksCodex: ["testudo", "auxilia"],
   },
@@ -116,9 +170,9 @@ export const SCENARIOS: Scenario[] = [
       { kind: "dacian_archers", at: { q: 12, r: 4 } },
     ],
     objectives: [
-      { kind: "win", text: "Break the Dacian line", points: 150 },
-      { kind: "cuneus_kills", text: "Destroy 2 enemy units with a cohort in Cuneus", value: 2, points: 75 },
-      { kind: "flank_kills", text: "Destroy 1 enemy unit while it is flanked", value: 1, points: 50 },
+      win("Break the Dacian line", 150),
+      cuneusKills("Destroy 2 enemy units with a cohort in Cuneus", 2, 75),
+      flankKills("Destroy 1 enemy unit while it is flanked", 1, 50),
     ],
     unlocksCodex: ["cuneus", "tapae", "falx"],
   },
@@ -144,10 +198,10 @@ export const SCENARIOS: Scenario[] = [
       { kind: "warband", at: { q: 13, r: 4 } },
     ],
     objectives: [
-      { kind: "win", text: "Destroy the Roxolani", points: 150 },
-      { kind: "no_cohort_routed", text: "No legionary cohort routs", points: 75 },
-      { kind: "cavalry_kills", text: "Destroy 2 enemy units with your alae", value: 2, points: 50 },
-      { kind: "orbis_held", text: "Hold Orbis for 2 cohort-turns while adjacent to cataphracts", value: 2, points: 50 },
+      win("Destroy the Roxolani", 150),
+      noCohortRouted("No legionary cohort routs", 75),
+      cavalryKills("Destroy 2 enemy units with your alae", 2, 50),
+      orbisHeld("Hold Orbis for 2 cohort-turns while adjacent to cataphracts", 2, 50),
     ],
     unlocksCodex: ["orbis", "flanking"],
   },
@@ -186,10 +240,10 @@ export const SCENARIOS: Scenario[] = [
       { kind: "warband", at: { q: 13, r: 4 } },
     ],
     objectives: [
-      { kind: "win", text: "Take the terraces", points: 250 },
-      { kind: "pila_before_melee", text: "Every cohort throws pila before melee", points: 50 },
-      { kind: "no_cohort_routed", text: "Bring every cohort home", points: 100 },
-      { kind: "flank_kills", text: "Destroy 2 units while flanked", value: 2, points: 50 },
+      win("Take the terraces", 250),
+      pilaFirst("Every cohort throws pila before melee", 50),
+      noCohortRouted("Bring every cohort home", 100),
+      flankKills("Destroy 2 units while flanked", 2, 50),
     ],
     unlocksCodex: ["sarmizegetusa", "dacian_wars", "trajan"],
   },

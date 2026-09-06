@@ -87,6 +87,7 @@ async function startBattle(id: string): Promise<void> {
 
 async function submit(state: BattleState): Promise<void> {
   const stats = toStats(state);
+  const m = stats.metrics;
   const sc = state.scenario;
   const progress = allProgress(state);
   try {
@@ -94,7 +95,7 @@ async function submit(state: BattleState): Promise<void> {
 
     // After-action review: for anything missed, say in one line what would have met it.
     const rows = progress.map((p) => {
-      const met = out.objectivesMet.includes(p.objective.kind);
+      const met = out.objectivesMet.includes(p.objective.id);
       return el("div", { class: `result-row ${met ? "met" : "missed"}` },
         el("span", { class: "mark-x", text: met ? "✓" : "·" }),
         el("div", { class: "result-body" },
@@ -106,7 +107,7 @@ async function submit(state: BattleState): Promise<void> {
 
     const body = el("div", {},
       el("p", { class: "muted", text: state.over?.reason ?? "" }),
-      el("p", { text: `${stats.turns} turns · ${state.campaign.player.adjective} losses ${stats.playerLosses} · ${state.campaign.enemy.adjective} losses ${stats.enemyLosses}` }),
+      el("p", { text: `${m.turns} turns · ${state.campaign.player.adjective} losses ${m.playerLosses} · ${state.campaign.enemy.adjective} losses ${m.enemyLosses}` }),
       el("div", { class: "points-big", text: out.pointsEarned > 0 ? `+${out.pointsEarned} history points` : stats.won ? "Already earned" : "No points" }),
       ...rows,
       out.rankUp ? el("p", { class: "lesson-box", text: `Promoted: ${out.rankUp}` }) : null,

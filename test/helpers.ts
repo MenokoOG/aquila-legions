@@ -1,8 +1,14 @@
-import type { Scenario, Terrain, UnitPlacement } from "../shared/types.js";
+import type { Objective, Scenario, Terrain, UnitPlacement } from "../shared/types.js";
 import { type BattleState, type BattleUnit, createBattle } from "../client/src/engine/battle.js";
 import { setRoll } from "../client/src/engine/rules.js";
 
 /** Small fixtures so each test can state only the part of the board it cares about. */
+
+/** The objective every fixture carries unless it says otherwise. */
+export const WIN: Objective = {
+  id: "win", text: "Clear the field", metric: "enemiesLeft", compare: "victory", points: 100,
+  hint: "Rout or destroy every enemy unit before the turn limit.",
+};
 
 /**
  * Fixtures still name the two armies of the first campaign, because that is what
@@ -24,7 +30,7 @@ export function scenario(spec: FieldSpec = {}): Scenario {
     terrain: spec.terrain ?? {},
     player: spec.rome ?? [],
     enemy: spec.dacia ?? [],
-    objectives: spec.objectives ?? [{ kind: "win", text: "Clear the field", points: 100 }],
+    objectives: spec.objectives ?? [WIN],
     unlocksCodex: [],
   };
 }
