@@ -11,6 +11,13 @@ import { hexes, terrain } from "./board.js";
  * men could not be flanked and a host many times that size could not bring its
  * numbers to bear. Four of these six battles are therefore won by where you
  * stand, when you leave, or what you decline to do — not by clearing the field.
+ *
+ * Tuning. This campaign is a lesson, not a contest, so each battle is set to the
+ * point where playing it the way its own `lesson` says wins most of the time.
+ * The enemy level is chosen for that, not for a ramp: the host that comes
+ * straight at you is both the easiest opponent and the one Tacitus describes.
+ * Where a battle was still lost by the taught play, the host was thinned or the
+ * bar lowered, and the thinner host is noted on the scenario.
  */
 
 const HINT_GROUND =
@@ -71,7 +78,9 @@ export const BRITANNIA_SCENARIOS: Scenario[] = [
     briefing: "The colony has no wall. It was never given one: a colony of veterans was supposed to be its own wall. The Iceni and the Trinovantes are already in the streets, and everything left of Camulodunum is the temple precinct and the old soldiers standing on its steps. Hold it. Help is on the road.",
     tactic: "Delay as a victory",
     lesson: "You cannot win this. You can last. Survive to the end of the turn limit with the temple still held and the battle is a Roman victory, whatever the field looks like. Falling back is a legitimate order, and standing on the marked ground at the end is what counts.",
-    width: W, height: H, maxTurns: 8, ai: "seasoned",
+    // Four turns is all three old cohorts can stand against three warhosts; the
+    // clock says the same so a win reads as the end of the day, not a reprieve.
+    width: W, height: H, maxTurns: 4, ai: "raw",
     terrain: terrain({
       // The precinct on its podium, the burnt streets around it, the ditch behind.
       cliff: [[5, 3], [5, 6], [8, 3], [8, 6]],
@@ -81,7 +90,7 @@ export const BRITANNIA_SCENARIOS: Scenario[] = [
     }),
     keyHexes: hexes([[6, 4], [7, 4], [6, 5], [7, 5]]),
     victory: {
-      metric: "turnsSurvived", compare: "gte", value: 8,
+      metric: "turnsSurvived", compare: "gte", value: 4,
       text: "Hold the precinct until the end.",
     },
     player: [
@@ -97,7 +106,7 @@ export const BRITANNIA_SCENARIOS: Scenario[] = [
       { kind: "britons_slingers", at: { q: 11, r: 7 } },
     ],
     objectives: [
-      survive("Hold the precinct for 8 turns", 8, 150),
+      survive("Hold the precinct for 4 turns", 4, 150),
       holdGround("Stand on the temple podium at the end", 2, 75),
       lossesUnder("Lose fewer than 400 men", 400, 50),
     ],
@@ -109,6 +118,9 @@ export const BRITANNIA_SCENARIOS: Scenario[] = [
     briefing: "Petillius Cerialis has brought what he could of Legio IX Hispana down the road at speed, and speed is the whole of the problem: the legion is strung out along it in column, baggage and all, and the woods on both sides are full. Get what you can out to the west. Tacitus says the infantry did not get out.",
     tactic: "A column is not a line",
     lesson: "Marching Column moves 5 on any ground and is close to defenceless. It is how you cover distance and it is the worst possible thing to be caught in. Drop to Line the moment contact is likely, and take the units you can save off the western exits.",
+    // Veteran here on purpose: a host that forms up before it commits gives the
+    // column the head start that a straight rush does not. One chariot fewer
+    // than the field once held: the ambush is the lesson, not the annihilation.
     width: W, height: H, maxTurns: 10, ai: "veteran",
     formations: ["line", "march_column", "testudo", "orbis"],
     terrain: terrain({
@@ -122,8 +134,8 @@ export const BRITANNIA_SCENARIOS: Scenario[] = [
     }),
     exits: hexes([[0, 4], [0, 5], [0, 6]]),
     victory: {
-      metric: "unitsExtracted", compare: "gte", value: 3,
-      text: "Get three units off the western road.",
+      metric: "unitsExtracted", compare: "gte", value: 2,
+      text: "Get two units off the western road.",
     },
     player: [
       { kind: "cohort", at: { q: 8, r: 5 }, label: "Coh. II Hispana" },
@@ -133,15 +145,14 @@ export const BRITANNIA_SCENARIOS: Scenario[] = [
     ],
     enemy: [
       { kind: "essedarii", at: { q: 4, r: 3 } },
-      { kind: "essedarii", at: { q: 4, r: 7 } },
       { kind: "britons_warhost", at: { q: 6, r: 3 } },
       { kind: "britons_warhost", at: { q: 6, r: 7 } },
       { kind: "britons_slingers", at: { q: 9, r: 3 } },
       { kind: "britons_slingers", at: { q: 9, r: 7 } },
     ],
     objectives: [
-      getAway("extract", "Get 3 units off the western road", 3, 150),
-      getAway("extract_all", "Get the cavalry out as well", 4, 75),
+      getAway("extract", "Get 2 units off the western road", 2, 150),
+      getAway("extract_all", "Get 3 out, cavalry included", 3, 75),
       lossesUnder("Lose fewer than 600 men on the road", 600, 50),
     ],
     unlocksCodex: ["ninth_hispana", "roman_roads"],
@@ -152,7 +163,7 @@ export const BRITANNIA_SCENARIOS: Scenario[] = [
     briefing: "Paulinus came to Londinium ahead of his army, looked at it, and decided it could not be held. The order is to abandon the town. Those who can march may march with the column; the column will not wait, and the Britons are already on the road behind it. Get the people out.",
     tactic: "Escort under pressure",
     lesson: "Two of your units cannot fight at all. Screening is a positional problem, not a combat one: the cohorts have to be between the refugees and the chariots, and every turn you spend killing is a turn the refugees are not walking. Exit hexes are on the west edge.",
-    width: W, height: H, maxTurns: 12, ai: "veteran",
+    width: W, height: H, maxTurns: 12, ai: "raw",
     terrain: terrain({
       road: [[0, 4], [1, 4], [2, 4], [3, 4], [4, 4], [5, 4], [6, 4], [7, 4], [8, 4], [9, 4], [10, 4]],
       marsh: [[4, 2], [5, 2], [6, 2], [4, 6], [5, 6], [6, 6], [7, 6], [3, 7], [8, 2]],
@@ -190,7 +201,9 @@ export const BRITANNIA_SCENARIOS: Scenario[] = [
     briefing: "The army is together at last and it is still far too small. Paulinus will not fight in the open, so the question is not whether to give battle but where. He has found a defile: crags on both hands, thick woods behind, and nothing in front but open country an enemy has to cross. Take the position and let them come to you.",
     tactic: "Frontage and flank security",
     lesson: "Numbers only count if they can reach you. In a defile a host of any size can only present the width of the gap, so hold the line between the crags and let them arrive piecemeal. Your flanks cannot be turned if they rest on ground nobody can walk on.",
-    width: W, height: H, maxTurns: 14, ai: "veteran",
+    // Two warhosts, not three: the gap is the lesson, and three could not be
+    // broken in it before night by anyone but an expert.
+    width: W, height: H, maxTurns: 14, ai: "seasoned",
     terrain: terrain({
       cliff: [[5, 0], [5, 1], [5, 2], [6, 0], [6, 1], [5, 7], [5, 8], [5, 9], [6, 8], [6, 9]],
       forest: [[0, 2], [0, 3], [1, 3], [0, 4], [1, 4], [0, 5], [1, 5], [0, 6], [1, 6], [0, 7]],
@@ -217,7 +230,6 @@ export const BRITANNIA_SCENARIOS: Scenario[] = [
     enemy: [
       { kind: "britons_warhost", at: { q: 11, r: 3 } },
       { kind: "britons_warhost", at: { q: 11, r: 5 } },
-      { kind: "britons_warhost", at: { q: 12, r: 4 } },
       { kind: "iceni_nobles", at: { q: 10, r: 4 } },
       { kind: "essedarii", at: { q: 12, r: 7 } },
       { kind: "britons_slingers", at: { q: 13, r: 2 } },
@@ -235,7 +247,9 @@ export const BRITANNIA_SCENARIOS: Scenario[] = [
     briefing: "Everything is here. Tacitus gives Paulinus ten thousand men and refuses to guess at the British number beyond saying it was past counting. The families have come to watch and have drawn their wagons across the back of the field to see it from. Throw, hold, and when the front gives way, do not stop.",
     tactic: "Everything, at ten to one",
     lesson: "Volley, then hold the line, then push. This host is enormous and it is brittle: break one warhost beside another and the second may go with it, and the wagons behind them mean a host that turns to run has nowhere to run to. Break them; you do not have to kill them all.",
-    width: W, height: H, maxTurns: 16, ai: "veteran",
+    // Raw is the history: Tacitus has the host come on as a mass, sure of its
+    // numbers, and that is the host a first-time player can break.
+    width: W, height: H, maxTurns: 16, ai: "raw",
     terrain: terrain({
       cliff: [[4, 0], [4, 1], [5, 0], [4, 8], [4, 9], [5, 9]],
       forest: [[0, 3], [0, 4], [0, 5], [0, 6], [1, 4], [1, 5]],
