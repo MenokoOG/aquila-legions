@@ -177,13 +177,21 @@ export function isExit(s: BattleState, u: BattleUnit, h: Hex): boolean {
 /**
  * A unit that ends its move on an exit walks off the board. Scenarios that
  * teach getting away rather than winning are counting these.
+ *
+ * The win is deliberately not tested here. It used to be, and that ended the
+ * battle the instant the second party of refugees crossed the line, in the
+ * middle of the player's own turn, with the escort still on the board. Both
+ * extraction battles carry a bonus for bringing more out than the minimum, and
+ * neither bonus could ever be scored: the battle was over before the third unit
+ * could be given an order. `endTurn` tests the win once the turn is finished,
+ * which is early enough that the host never moves again and late enough that
+ * everyone who could get away has had the chance.
  */
 function extract(s: BattleState, u: BattleUnit): void {
   if (!isExit(s, u, u.at)) return;
   s.units = s.units.filter((x) => x.id !== u.id);
   s.track.unitsExtracted += 1;
   log(s, `${u.label} is clear of the field.`, "system");
-  checkOver(s);
 }
 
 export function adjacentEnemies(s: BattleState, u: BattleUnit): BattleUnit[] {

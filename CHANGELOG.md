@@ -6,6 +6,56 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed — the Burning of Britain is easier, and two of its objectives were impossible
+
+From a play session: the second campaign is too hard, and the difficulty eats the lesson. You stop exploring and start grinding.
+
+So the campaign got measured instead of argued about. `npm run playtest` plays each battle 200 times with a bot that does only what that battle's own briefing says: hold the marked ground, run for the exits, throw before you swing, rotate a battered cohort out, do not chase. It prints the win rate and the rate for every bonus. The bar is that the taught play wins and that no bonus is out of reach.
+
+Before, with the bot playing exactly as taught:
+
+| Battle | Win | Bonuses scored |
+|---|---|---|
+| The Temple of Claudius | 99% | 0 of 2 |
+| The Ninth on the Road | 0% | 0 of 2 |
+| Londinium Given Up | 100% | 0 of 2 |
+| Choosing the Ground | 0% | 0 of 2 |
+| Watling Street | 2% | 0 of 3 |
+| The Winter Sweep | 100% | 0 of 2 |
+
+After:
+
+| Battle | Win | Bonuses scored |
+|---|---|---|
+| The Temple of Claudius | 100% | 100%, 100% |
+| The Ninth on the Road | 100% | see below, 100% |
+| Londinium Given Up | 100% | see below, 50% |
+| Choosing the Ground | 100% | 100%, 57% |
+| Watling Street | 100% | 100%, 25%, 100% |
+| The Winter Sweep | 100% | 100%, 97% |
+
+**Two battles could not be won by playing them the way they teach.**
+
+- **Choosing the Ground** told you to stand in the mouth of a defile and let them come, and then asked you to clear the field. The slingers at the back never come. Holding the defile correctly lost the battle every time. It is won by breaking what walks into the gap.
+- **Watling Street** said "break them; you do not have to kill them all" and then counted the two wagon lines, which never move and never fight, toward a win that needed all but two enemy units. It needed every last warband. Breaking the host now means six left rather than three.
+
+**Two bonuses could not be scored at all.** Both extraction battles pay for bringing out more than the minimum, and both ended the instant the minimum crossed the line, in the middle of your own turn, with the rest of the column still holding orders. The win is now tested when the turn ends, which is early enough that the host never moves again and late enough that everyone who could get away has had the chance. That is one line in `rules.ts`, and it is the whole reason those two bonuses read 0% over 200 runs each.
+
+The rest is thinning and slack, battle by battle:
+
+- **The Temple of Claudius:** two warhosts, and no slingers. The old men carry no missile of their own, so a slinger they could never answer only made the podium a place to be shot off. Loss cap 400 to 650, and the podium bonus asks for one hex rather than two.
+- **The Ninth on the Road:** the host comes straight on rather than forming up first, one slinger band instead of two, 12 turns instead of 10, loss cap 600 to 900.
+- **Londinium Given Up:** one chariot instead of two, 14 turns instead of 12, and the escort bonus asks for 4 out rather than all 5.
+- **Choosing the Ground:** the host comes straight on, the noble band is gone, and the ground bonus asks for two hexes of the mouth rather than three.
+- **Watling Street:** three warhosts instead of four, one noble band instead of two, 18 turns instead of 16.
+- **The Winter Sweep:** the host comes straight on. The restraint cap was 900 kills when breaking all four bands takes at least 1,755 — it was arithmetically impossible. It is 2,100. Loss cap 300 to 1,000.
+
+Every battle in the campaign now fights `raw`, which is both the gentlest opponent and the one Tacitus describes: a host that comes on as a mass, sure of its numbers.
+
+That made the briefing say "Opposite you: A probe" on Watling Street, which is a joke at the expense of an army Tacitus refused to count. An era can now name its own host: the level says what the enemy can do, the campaign says what to call it, and Britannia calls `raw` "a host that does not manoeuvre". Dacia says nothing and keeps the level's own wording.
+
+- `scripts/playtest.ts` (new, `npm run playtest`, `npm run playtest watling` for one). 221 tests pass, including two new ones over the extraction rule.
+
 ### Added — a way back to the top of a long page
 
 The Codex is fifty-odd cards across two eras and the Commentarii grows for as long as notes keep getting filed. Both run well past a screen, and the era chips and the Back button sit at the very top of them. Getting back meant a long drag on the wheel.

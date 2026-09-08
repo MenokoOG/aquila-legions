@@ -3,6 +3,7 @@ import { beforeEach, describe, it } from "node:test";
 import { TERRAIN } from "../shared/data/terrain.js";
 import { UNITS } from "../shared/data/units.js";
 import { CAMPAIGNS } from "../shared/data/campaigns.js";
+import { AI_LEVELS, hostWording } from "../shared/data/ai-levels.js";
 import { SCENARIOS, scenariosOf } from "../shared/data/scenarios.js";
 import { createBattle, metrics, unitsOf } from "../client/src/engine/battle.js";
 import { enemyTurn } from "../client/src/engine/ai/index.js";
@@ -98,7 +99,36 @@ describe("winning by something other than the field", () => {
     ok(moveUnit(s, cohort, { q: 0, r: 4 }));
     strictEqual(s.units.length, 0, "it walked off the board");
     strictEqual(metrics(s).unitsExtracted, 1);
+    const midTurn = s.over;
+    strictEqual(midTurn, null, "the turn is not over just because the threshold was met");
+
+    endTurn(s);
     ok(s.over?.won, "and the last unit leaving is the win, not the army being destroyed");
+  });
+
+  it("lets the rest of the turn be played after the escape is already won", () => {
+    // The bonus for bringing more out than the minimum used to be unreachable:
+    // the battle ended the instant the second unit crossed the line, mid-turn,
+    // with everyone still on the board holding orders they could not spend.
+    const s = field({
+      rome: [
+        { kind: "cohort", at: { q: 1, r: 3 } },
+        { kind: "cohort", at: { q: 1, r: 4 } },
+        { kind: "cohort", at: { q: 1, r: 5 } },
+      ],
+    });
+    s.scenario.exits = [{ q: 0, r: 3 }, { q: 0, r: 4 }, { q: 0, r: 5 }];
+    s.scenario.victory = { metric: "unitsExtracted", compare: "gte", value: 2, text: "Get away." };
+
+    ok(moveUnit(s, at(s, 1, 3), { q: 0, r: 3 }));
+    ok(moveUnit(s, at(s, 1, 4), { q: 0, r: 4 }));
+    const midTurn = s.over;
+    strictEqual(midTurn, null, "two are clear and the day is not over yet");
+    ok(moveUnit(s, at(s, 1, 5), { q: 0, r: 5 }), "the third still has its orders");
+
+    endTurn(s);
+    strictEqual(metrics(s).unitsExtracted, 3);
+    ok(s.over?.won);
   });
 
   it("counts only the key hexes a player unit is standing on", () => {
@@ -323,5 +353,20 @@ describe("choosing the ground", () => {
     ok(commitDeployment(s));
     strictEqual(s.phase, "battle");
     ok(!commitDeployment(s), "and it only happens once");
+  });
+});
+
+describe("what the briefing calls the host in front of you", () => {
+  it("uses the era's own words where the era has some", () => {
+    const britannia = CAMPAIGNS.find((c) => c.id === "britannia")!;
+    const raw = hostWording(britannia, "raw");
+    ok(/manoeuvre/i.test(raw.name), `Britannia should name its own host, got "${raw.name}"`);
+    ok(raw.blurb.length > 40, "and say what fighting it is like");
+  });
+
+  it("falls back to the level's wording for an era that says nothing", () => {
+    const dacia = CAMPAIGNS.find((c) => c.id === "dacia")!;
+    strictEqual(hostWording(dacia, "raw").name, AI_LEVELS.raw.name);
+    strictEqual(hostWording(dacia, undefined).name, AI_LEVELS.seasoned.name, "unset is the middle level");
   });
 });
