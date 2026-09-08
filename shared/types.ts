@@ -67,6 +67,14 @@ export interface Campaign {
   blurb: string;
   player: Faction;
   enemy: Faction;
+  /**
+   * What this era calls an enemy fighting at a given level. The levels are
+   * capabilities, and the same capability has a different name in a different
+   * war: a host that comes straight on is a probe in Dacia and the whole of
+   * Boudica's army in Britain. Anything left unset falls back to the level's
+   * own wording.
+   */
+  hosts?: Partial<Record<AiLevel, { name: string; blurb: string }>>;
 }
 
 /**

@@ -11,7 +11,7 @@ import {
 import { type Forecast, forecast } from "../engine/forecast.js";
 import { type ThreatMap, threatAt, threatMap } from "../engine/threat.js";
 import { enemyTurn } from "../engine/ai/index.js";
-import { policyFor } from "../../../shared/data/ai-levels.js";
+import { hostWording } from "../../../shared/data/ai-levels.js";
 import { Effects } from "../effects.js";
 import { type AdvisorHandlers, type Counsel, renderAdvisor } from "./advisorPanel.js";
 import { firedTriggers, noteFromCounsel, noteFromTip } from "../advisor/commentarii.js";
@@ -493,7 +493,7 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
     ]);
   }
 
-  const enemyPolicy = policyFor(scenario.ai);
+  const enemyHost = hostWording(s.campaign, scenario.ai);
 
   function showLesson(): void {
     showModal(scenario.title, el("div", {},
@@ -510,8 +510,8 @@ export function mountBattle(root: HTMLElement, scenario: Scenario, h: BattleScre
           ? el("p", { class: "muted small", text: "A unit that ends its move on a gold EXIT hex walks off the board and is safe." })
           : null,
       ),
-      el("h3", { text: `Opposite you: ${enemyPolicy.name}` }),
-      el("p", { class: "muted small", text: enemyPolicy.blurb }),
+      el("h3", { text: `Opposite you: ${enemyHost.name}` }),
+      el("p", { class: "muted small", text: enemyHost.blurb }),
       el("h3", { text: "Objectives" }),
       ...scenario.objectives.map((o) => el("div", { class: "objective" }, el("span", { class: "pts", text: `+${o.points}` }), o.text)),
       el("h3", { text: "Reading the board" }),

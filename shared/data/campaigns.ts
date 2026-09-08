@@ -23,6 +23,12 @@ export const CAMPAIGNS: Campaign[] = [
     blurb: "Six battles about ground, frontage and nerve. Dacia taught you what a legion does; this one is won and lost by where you choose to stand, and by whether ten thousand men can be made to look like enough.",
     player: { name: "Rome", adjective: "Roman", plural: "The legion" },
     enemy: { name: "Britain", adjective: "British", plural: "The Britons" },
+    hosts: {
+      raw: {
+        name: "A host that does not manoeuvre",
+        blurb: "They come on as one mass, sure of their numbers. Tacitus gives the Britons no order beyond weight, and weight is what the whole campaign is about answering.",
+      },
+    },
   },
 ];
 

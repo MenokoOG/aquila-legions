@@ -9,7 +9,7 @@
  * the best opponent in the game.
  */
 
-import type { AiLevel, AiPolicy } from "../types.js";
+import type { AiLevel, AiPolicy, Campaign } from "../types.js";
 
 export const AI_LEVELS: Record<AiLevel, AiPolicy> = {
   raw: {
@@ -35,4 +35,16 @@ export const AI_LEVELS: Record<AiLevel, AiPolicy> = {
 /** The level a scenario fights at. Unset means the middle one. */
 export function policyFor(level: AiLevel | undefined): AiPolicy {
   return AI_LEVELS[level ?? "seasoned"];
+}
+
+/**
+ * What the briefing calls the enemy in front of you. The level says what it can
+ * do; the campaign says what to call it, because the same capability is a probe
+ * in one war and an army past counting in the next.
+ */
+export function hostWording(
+  campaign: Campaign, level: AiLevel | undefined,
+): { name: string; blurb: string } {
+  const policy = policyFor(level);
+  return campaign.hosts?.[level ?? "seasoned"] ?? { name: policy.name, blurb: policy.blurb };
 }
