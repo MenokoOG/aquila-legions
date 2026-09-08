@@ -532,3 +532,27 @@ input.name:focus-visible { border-color: var(--gold); outline-offset: 0; }
   border-bottom: 1px solid var(--gold);
 }
 .stale-banner strong { color: var(--gold-lit); }
+
+/* The way back up a long page. Bottom-left: the toast stack owns bottom-right. */
+.back-to-top {
+  position: fixed; left: 1.1rem; bottom: 1.1rem; z-index: 55;
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  padding: 0.55rem 0.9rem; cursor: pointer;
+  font-family: var(--font-body); font-weight: 600;
+  font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--gold-lit);
+  border: 1.5px solid var(--rule); border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--panel), var(--ink-2));
+  box-shadow: var(--shadow);
+  opacity: 0; visibility: hidden; transform: translateY(8px);
+}
+.back-to-top.show { opacity: 1; visibility: visible; transform: none; }
+.back-to-top:hover { border-color: var(--gold); color: var(--ivory); }
+.bt-arrow { font-size: 0.7rem; line-height: 1; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .back-to-top { transition: opacity 180ms ease, transform 180ms ease; }
+}
+@media (max-width: 768px) {
+  .back-to-top { left: 0.7rem; bottom: 0.7rem; }
+}
