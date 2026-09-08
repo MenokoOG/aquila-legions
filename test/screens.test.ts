@@ -14,6 +14,7 @@ installDom();
 const { renderMenu } = await import("../client/src/ui/menu.js");
 const { renderCodex } = await import("../client/src/ui/codex.js");
 const { serverIsStale, warnIfStale } = await import("../client/src/ui/staleBanner.js");
+const { SHOW_AFTER, shouldShow } = await import("../client/src/ui/backToTop.js");
 
 /**
  * The screens, built and walked.
@@ -210,5 +211,22 @@ describe("the stale-server warning", () => {
     warnIfStale(BUILT - 1, BUILT, body as unknown as HTMLElement);
     strictEqual(body.children[0]?.className, "stale-banner");
     strictEqual(body.children[1]?.tagName, "main");
+  });
+});
+
+describe("the way back up a long page", () => {
+  it("stays out of the way while the top of the page is still in sight", () => {
+    strictEqual(shouldShow(0), false);
+    strictEqual(shouldShow(SHOW_AFTER), false, "exactly at the line is not past it");
+  });
+
+  it("appears once there is something to scroll back to", () => {
+    ok(shouldShow(SHOW_AFTER + 1));
+    ok(shouldShow(4000), "the Codex is far longer than one screen");
+  });
+
+  it("does not appear on a number that is not one", () => {
+    strictEqual(shouldShow(Number.NaN), false);
+    strictEqual(shouldShow(Number.POSITIVE_INFINITY), false);
   });
 });

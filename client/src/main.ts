@@ -10,6 +10,7 @@ import { renderCodex } from "./ui/codex.js";
 import { renderCommentarii } from "./ui/commentarii.js";
 import { type Dispose, mountBattle } from "./ui/battleScreen.js";
 import { warnIfStale } from "./ui/staleBanner.js";
+import { mountBackToTop } from "./ui/backToTop.js";
 
 /** Screen router. Menu, battle, codex. Nothing else lives here. */
 
@@ -170,4 +171,5 @@ function confirmReset(): void {
   ]);
 }
 
+mountBackToTop();
 void showMenu();

@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added — a way back to the top of a long page
+
+The Codex is fifty-odd cards across two eras and the Commentarii grows for as long as notes keep getting filed. Both run well past a screen, and the era chips and the Back button sit at the very top of them. Getting back meant a long drag on the wheel.
+
+A fixed button now sits bottom-left and appears once the page has scrolled more than 480px. It scrolls smoothly unless the player has asked for reduced motion, and it hands focus back to the top bar so the keyboard follows the eye. Bottom-left because the toast stack owns bottom-right.
+
+It is mounted on the document once, not per screen, so every long screen gets it. A `ResizeObserver` on the document keeps it in step when a screen swap changes the page height without anyone scrolling.
+
+- `client/src/ui/backToTop.ts`, and 3 tests over the show/hide rule. 220 pass. Checked in a real browser on the Codex: hidden at the top, shown at 1500px, back to 0 and hidden again on click, no console errors.
+
 ### Added — the page says when the server is older than it is
 
 `express.static` reads `dist/` from disk per request, so a server left running across a `git pull` serves the rebuilt page off the rules it loaded at startup. The result is a current screen against a stale API — a campaign the client would happily draw that the server never mentions, a save version it rejects, a route that 404s — and nothing anywhere says so. It reads as a bug in the feature.
