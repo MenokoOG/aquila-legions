@@ -1,6 +1,6 @@
 # Plan 0001 — Britannia campaign, the Praefectus adviser, and the render speedups
 
-<!-- aquila-legions | drafted 2026-09-05 | against M3n0ko0g-library rules/{engineering-standards,modularity,guardrails,production-dod}.md and commands/plan.md -->
+<!-- aquila-legions | drafted 2026-09-05 | against the classHuman library rules (rune-library/rules/{engineering-standards,modularity,guardrails,production-dod}.md) and rune-library/commands/plan.md -->
 <!-- Repo state measured on Windows, in the real checkout: F:\classHuman\aquila-legions, branch claude/plan-britannia-adviser, clean tree at 48876f8. -->
 
 Three workstreams came out of the test notes. They're sequenced, not simultaneous.
