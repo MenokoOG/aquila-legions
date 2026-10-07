@@ -86,9 +86,9 @@ The engine deals in `player` and `enemy`. It does not contain the word "Dacia", 
 2. A roster file, `shared/data/units-<era>.ts`, imported into `shared/data/units.ts`. `UnitKind` is derived from what is there, so the type follows the data.
 3. A scenario file, `shared/data/scenarios-<era>.ts`, imported into `shared/data/scenarios.ts`, with each battle carrying that `campaignId` and counting its own `order` from one. Codex entries go in `shared/data/codex.ts`.
 
-Britannia was built that way and needed no edit to the combat rules. What it did need is in `docs/adr/0004-a-battle-is-not-always-won-by-clearing-the-field.md`: a scenario can carry its own victory condition, ground is a table, and a unit can be brittle.
+Britannia was built that way and needed no edit to the combat rules. What it did need: a scenario can carry its own victory condition, ground is a table, and a unit can be brittle.
 
-`test/campaign.test.ts` guards those seams: it fails if a scenario points at a campaign that does not exist, places a unit the roster does not have, or puts a unit on the wrong side. The reasoning behind the split is in `docs/adr/0002-campaign-registry-and-generic-sides.md`.
+`test/campaign.test.ts` guards those seams: it fails if a scenario points at a campaign that does not exist, places a unit the roster does not have, or puts a unit on the wrong side.
 
 `rules.ts` keeps the damage formulas pure and separate from the dice, so `engine/forecast.ts` can show a prediction that cannot drift from the blow, and the tests can pin the roll and assert on the rules alone.
 
@@ -133,7 +133,7 @@ OPENAI_API_KEY=sk-...
 
 **What it is allowed to do is narrow on purpose.** The local adviser decides what is *true*; the model only decides how it *sounds*. It is sent this turn's already-computed advice and nothing else — not the board, not the rules, not your save, not your name — and it is instructed to assert nothing it was not handed. It never writes history and it never gives orders.
 
-That constraint is not about model size. A bigger model invents Roman history more fluently, not less, and every Codex statement in this game is meant to be checkable in Tacitus, Dio, Vegetius, Josephus or on Trajan's Column. Generated history would quietly void the one claim the project makes. See `docs/adr/0005-counsel-is-voice-only-and-optional.md`.
+That constraint is not about model size. A bigger model invents Roman history more fluently, not less, and every Codex statement in this game is meant to be checkable in Tacitus, Dio, Vegetius, Josephus or on Trajan's Column. Generated history would quietly void the one claim the project makes.
 
 - One call per turn, fired by a button, never automatically. Six-second timeout, no retries.
 - Model: `gpt-5.6-luna` on the Responses API, roughly $0.00015 a call. Override with `COUNSEL_MODEL`.

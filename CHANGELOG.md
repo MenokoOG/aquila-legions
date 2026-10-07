@@ -103,7 +103,7 @@ The local adviser is correct, free and instant, and it reads like a rules engine
 
 **Facts in, prose out.** `client/src/advisor/tips.ts` decides what is true. The model is sent those already-true sentences and nothing else — not the board, not the rules, not the save, not the commander's name — and is instructed to assert nothing it was not handed. It picks the one or two that matter this turn and phrases them. It never writes history and never gives orders.
 
-That constraint is not about model size. A larger model invents Roman history more fluently, not less, and every Codex statement in this game is meant to be checkable in Tacitus, Dio, Vegetius, Josephus, Caesar or on Trajan's Column. Generated history would quietly void the only claim the project makes, and nobody would notice — which is what makes it the failure worth designing against. See `docs/adr/0005-counsel-is-voice-only-and-optional.md`.
+That constraint is not about model size. A larger model invents Roman history more fluently, not less, and every Codex statement in this game is meant to be checkable in Tacitus, Dio, Vegetius, Josephus, Caesar or on Trajan's Column. Generated history would quietly void the only claim the project makes, and nobody would notice — which is what makes it the failure worth designing against.
 
 - `POST /api/counsel`. No key: 501, `GET /api/state` reports `counsel: false`, and the client never builds a button that cannot work.
 - `gpt-5.6-luna` on the Responses API, about $0.00015 a call at roughly 400 in and 60 out. `COUNSEL_MODEL` and `COUNSEL_URL` override the model and the endpoint — the second is how the whole path is tested against a stub, and how you would point it at a local model server instead.
@@ -148,7 +148,7 @@ Scenario 6 is Paulinus's punitive winter, the one that had Classicianus writing 
 
 ### Changed — a battle is not always won by clearing the field
 
-`checkOver` said victory was an empty enemy list and the turn limit was always a defeat. A scenario now carries a victory condition in the same shape as an objective, judged by the same comparator, and absent means the old rule. See `docs/adr/0004-a-battle-is-not-always-won-by-clearing-the-field.md`.
+`checkOver` said victory was an empty enemy list and the turn limit was always a defeat. A scenario now carries a victory condition in the same shape as an objective, judged by the same comparator, and absent means the old rule.
 
 - The win is tested before the wipe, because a battle won by getting away ends with no player units on the board.
 - The turn limit is a defeat only if the condition is unmet when it arrives, which is what makes a delaying action winnable.
@@ -231,7 +231,7 @@ A whole enemy turn costs 1.0 ms on average and 1.5 ms at worst on Sarmizegetusa,
 
 ### Changed — an objective is a comparison against a metric
 
-`Objective` carried a `kind` from a closed union and two files switched over it: the sidebar's live readout in `client/src/engine/objectives.ts`, and the scoring in `server/progress.ts`. Nine cases, written twice, in different packages, with nothing that would fail if the two ever disagreed about what "met" meant. Both switches are gone. See `docs/adr/0003-objectives-are-metric-comparisons.md`.
+`Objective` carried a `kind` from a closed union and two files switched over it: the sidebar's live readout in `client/src/engine/objectives.ts`, and the scoring in `server/progress.ts`. Nine cases, written twice, in different packages, with nothing that would fail if the two ever disagreed about what "met" meant. Both switches are gone.
 
 - A battle now publishes a `MetricBag` — every number it measures, by name. `metrics()` in `client/src/engine/battle.ts` builds it, and the same bag answers the live panel mid-battle and the server's scoring at the end, so the two cannot drift.
 - `Objective` is `{ id, text, metric, compare, value?, points, hint, outstanding? }`, with `compare` one of `victory`, `gte`, `lt`, `zero`. `shared/objectives.ts` is the only judge, imported by both packages.
@@ -246,7 +246,7 @@ A whole enemy turn costs 1.0 ms on average and 1.5 ms at worst on Sarmizegetusa,
 
 ### Changed — the Baroque skin
 
-The battle screen was redesigned, and the same stylesheet carries the menu, codex and modals so nothing is left unstyled. Light parchment out, midnight ground in: deep crimson for Rome, royal gold for rules and labels, royal purple for Dacia, emerald for an objective met. Type is Cinzel Decorative for display, Cinzel for body, JetBrains Mono for every number. Implemented from `docs/design_handoff_baroque_battle_screen/`, which is committed alongside as the reference.
+The battle screen was redesigned, and the same stylesheet carries the menu, codex and modals so nothing is left unstyled. Light parchment out, midnight ground in: deep crimson for Rome, royal gold for rules and labels, royal purple for Dacia, emerald for an objective met. Type is Cinzel Decorative for display, Cinzel for body, JetBrains Mono for every number.
 
 - `client/src/styles.css` replaced wholesale. No class was dropped: every selector the previous sheet styled is styled here too, and the design already targeted the post-refactor `.player` / `.enemy` side classes.
 - The canvas cannot read CSS, so `client/src/render.ts` carries the board palette separately: terrain fills, unit counters (crimson with a gold rim for Rome, royal purple with lavender for Dacia), the gold reach overlay with a rim so it reads on the dark ground, threat hatching, floating damage numbers and the strength bars.
@@ -281,7 +281,7 @@ Not changed: `fromPixel` measures 0.6 us and was never the bottleneck it was ass
 
 ### Changed
 
-- **The engine no longer knows who is fighting.** `Side` is `"player" | "enemy"`; a campaign record (`shared/data/campaigns.ts`) supplies the words on screen, so the log still reads "The Dacians move." while `rules.ts` contains neither name. Ten files named one or both peoples before this. See `docs/adr/0002-campaign-registry-and-generic-sides.md`.
+- **The engine no longer knows who is fighting.** `Side` is `"player" | "enemy"`; a campaign record (`shared/data/campaigns.ts`) supplies the words on screen, so the log still reads "The Dacians move." while `rules.ts` contains neither name. Ten files named one or both peoples before this.
 - `UnitKind` is derived from the roster files rather than written out by hand. Rosters split into `shared/data/units-rome.ts` and `shared/data/units-dacia.ts`; `shared/data/units.ts` assembles them and the type follows the data.
 - Formations are data (`shared/data/formations.ts`). `attackMul`, `defenseMul`, `missileMul`, `moveOverride`, `ignoresFlanking` and `blocksPila` were literals inside branches in `rules.ts`; combat now reads the table.
 - Unit behaviour the rules used to match on kind is now a trait on the template: `core`, `mounted`, `chargeBonus`, `armourPiercing`, `missileVerb`, `glyph`. Cataphracts charge harder because of a number on their template, not because `rules.ts` knows their name. The renderer's hardcoded glyph map is gone with it.
