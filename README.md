@@ -147,3 +147,7 @@ Runtime: `express`, and nothing else, the optional counsel above is one `fetch` 
 ## Accuracy note
 
 Unit sizes follow the paper strength of a Trajanic legion. Attack and defense values are game balance, not history. Every Codex statement is something you can check in Cassius Dio, Vegetius, Josephus, or on Trajan's Column.
+
+## License
+
+MIT. See [`LICENSE`](LICENSE).
