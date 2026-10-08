@@ -2,6 +2,7 @@
   "name": "aquila-legions",
   "version": "0.2.0",
   "private": true,
+  "license": "MIT",
   "description": "Aquila: Legions of Trajan. A local hex-tactics game that teaches Roman legion tactics and history.",
   "type": "module",
   "scripts": {
