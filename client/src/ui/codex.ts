@@ -98,7 +98,7 @@ export function renderCodex(entries: CodexView[], onBack: () => void): HTMLEleme
       const got = ordered.filter((e) => e.unlocked).length;
       body.append(section(
         c.title,
-        `${c.subtitle} — ${got} of ${ordered.length} unlocked.`,
+        `${c.subtitle}, ${got} of ${ordered.length} unlocked.`,
         ordered.map(entryCard),
       ));
     }

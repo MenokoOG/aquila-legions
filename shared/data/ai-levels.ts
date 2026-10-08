@@ -5,7 +5,7 @@
  * the first two battles are a probe by men who come straight at you, and by
  * Sarmizegetusa you are fighting a host that concentrates, waits for its
  * neighbours, and declines a trade it would lose. That progression is the
- * teaching order — a lesson you are still learning should not be examined by
+ * teaching order, a lesson you are still learning should not be examined by
  * the best opponent in the game.
  */
 

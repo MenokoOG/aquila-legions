@@ -32,7 +32,7 @@ export const TRIGGERS: KnowledgeTrigger[] = [
     id: "first_pila",
     metric: "pilaVolleys", compare: "gte", value: 1,
     title: "The volley before the sword",
-    note: "Caesar describes the legion at Pharsalus running, halting to throw, then closing with drawn swords — the pilum was thrown at a few dozen paces, not skirmished with. Vegetius says the same drill was still being taught centuries later. A shield with a pilum through it had to be dropped, which is most of what the weapon was for.",
+    note: "Caesar describes the legion at Pharsalus running, halting to throw, then closing with drawn swords, the pilum was thrown at a few dozen paces, not skirmished with. Vegetius says the same drill was still being taught centuries later. A shield with a pilum through it had to be dropped, which is most of what the weapon was for.",
     tags: ["pilum", "drill"],
   },
   {
@@ -60,7 +60,7 @@ export const TRIGGERS: KnowledgeTrigger[] = [
     id: "first_cavalry",
     metric: "cavalryKills", compare: "gte", value: 1,
     title: "The wings",
-    note: "The legions were infantry. The horse were auxilia — Gauls, Thracians, Batavians — organised in alae, the word for a wing, because that is where they stood. Trajan's Column shows them in mail, with the long spatha rather than the gladius, which is a sword for reaching down from a horse.",
+    note: "The legions were infantry. The horse were auxilia: Gauls, Thracians, Batavians, organised in alae, the word for a wing, because that is where they stood. Trajan's Column shows them in mail, with the long spatha rather than the gladius, which is a sword for reaching down from a horse.",
     tags: ["cavalry", "auxilia"],
   },
   {
@@ -74,7 +74,7 @@ export const TRIGGERS: KnowledgeTrigger[] = [
     id: "first_cohort_lost",
     metric: "cohortsRouted", compare: "gte", value: 1,
     title: "A cohort gone",
-    note: "A cohort was about 480 men with their centurions, their standard and their records. Rome could raise another and did, but the number stayed in the army list: Varus lost three legions in the Teutoburg and their numbers — XVII, XVIII, XIX — were never used again.",
+    note: "A cohort was about 480 men with their centurions, their standard and their records. Rome could raise another and did, but the number stayed in the army list: Varus lost three legions in the Teutoburg and their numbers: XVII, XVIII, XIX, were never used again.",
     tags: ["losses", "legion"],
   },
   {

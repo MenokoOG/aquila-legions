@@ -10,7 +10,7 @@ import {
  *
  * Two things are being defended here. The first is that a battle is never
  * blocked or broken by it: no key, a timeout, a rate limit, a shape nobody
- * expected — every one of those has to end as a quiet null and leave the local
+ * expected, every one of those has to end as a quiet null and leave the local
  * adviser exactly as it was. The second is that the key never appears anywhere
  * it could be read back.
  *

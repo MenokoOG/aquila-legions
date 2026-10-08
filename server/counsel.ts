@@ -112,7 +112,7 @@ export type Fetcher = typeof fetch;
 
 /**
  * Asks for the prefect's phrasing. Resolves to null on absolutely anything going
- * wrong — no key, a timeout, a rate limit, a refusal, a shape we did not expect.
+ * wrong, no key, a timeout, a rate limit, a refusal, a shape we did not expect.
  * The caller's job is then to show the local tip, which is what it was showing
  * before the request was made.
  */

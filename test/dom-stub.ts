@@ -2,7 +2,7 @@
  * Just enough DOM for `ui/dom.ts` to build a tree in Node.
  *
  * The two worst bugs shipped from this project so far were a button clipped out
- * of its card and a campaign tab rendered invisible — neither of which a
+ * of its card and a campaign tab rendered invisible, neither of which a
  * typechecker can see and neither of which any test could reach, because the
  * screens could not be built outside a browser. This is the smallest thing that
  * makes them reachable: structure and classes, no layout and no painting.

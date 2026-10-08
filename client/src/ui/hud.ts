@@ -155,7 +155,7 @@ function nameList(labels: string[]): string {
 function renderDanger(d: DangerView): HTMLElement | null {
   if (!d.melee.length && !d.missile.length) return null;
   return el("div", { class: "danger" },
-    el("h3", { text: `${d.subject} — under threat` }),
+    el("h3", { text: `${d.subject}, under threat` }),
     d.melee.length
       ? el("div", { class: "danger-row" },
         el("span", { class: "swatch sw-charge" }),

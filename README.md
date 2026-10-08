@@ -8,7 +8,7 @@ A local, single-player hex-tactics game about commanding Roman legions. Two camp
 
 Win a battle and the history behind its tactic unlocks in the Codex. History points and rank persist between sessions.
 
-The server is a small Express API on localhost that keeps one JSON save file. **Nothing leaves your machine unless you give it a key**: there is one optional feature, described below, that does — it is off by default, and the whole game is playable without it.
+The server is a small Express API on localhost that keeps one JSON save file. **Nothing leaves your machine unless you give it a key**: there is one optional feature, described below, that does, it is off by default, and the whole game is playable without it.
 
 ## Run it
 
@@ -68,13 +68,13 @@ One responsibility per file. The combat formulas live in `client/src/engine/rule
 
 ### The Commentarii
 
-Your notebook, on the campaign screen. Codex entries file themselves into it when you unlock them, and so do the notes that fire the first time you do a thing — the first pilum volley, the first tortoise under fire, the first wedge that breaks a line. Filter by tag, and export the lot as markdown: `GET /api/commentarii.md` writes a real file.
+Your notebook, on the campaign screen. Codex entries file themselves into it when you unlock them, and so do the notes that fire the first time you do a thing, the first pilum volley, the first tortoise under fire, the first wedge that breaks a line. Filter by tag, and export the lot as markdown: `GET /api/commentarii.md` writes a real file.
 
 The notes live in `shared/data/triggers.ts` as data, and each one is a comparison against a battle metric judged by the same comparator the objectives use. Adding one is a row, not a branch.
 
 ### The enemy
 
-`client/src/engine/ai/` decides the enemy's turn. It prices every option through `forecast`, the same pure formula your own forecast panel shows, so it cannot know a number you cannot see. The host picks one unit to break each turn, weighs every hex it could attack from — which is where flanking, the charge and the high ground come from, rather than from any rule about them — and, at the top level, waits for a neighbour instead of walking into the legion alone.
+`client/src/engine/ai/` decides the enemy's turn. It prices every option through `forecast`, the same pure formula your own forecast panel shows, so it cannot know a number you cannot see. The host picks one unit to break each turn, weighs every hex it could attack from, which is where flanking, the charge and the high ground come from, rather than from any rule about them, and, at the top level, waits for a neighbour instead of walking into the legion alone.
 
 How well it fights is a property of the scenario (`shared/data/ai-levels.ts`), and the briefing names it. The first two battles are a probe. Sarmizegetusa is not.
 
@@ -106,7 +106,7 @@ For drawing cost, which Node cannot measure, open the battle screen with `?perf=
 
 ## If the page and the server disagree
 
-`express.static` reads `dist/` from disk on every request, so a server left running across a `git pull` serves the **rebuilt page off its own stale rules**: new screens, an API from before the pull. Campaigns go missing, routes 404, the save version is rejected — and every symptom looks like a bug in the feature rather than in the process.
+`express.static` reads `dist/` from disk on every request, so a server left running across a `git pull` serves the **rebuilt page off its own stale rules**: new screens, an API from before the pull. Campaigns go missing, routes 404, the save version is rejected, and every symptom looks like a bug in the feature rather than in the process.
 
 The page now says so. If the API process started before the bundle it is serving, a banner appears at the top telling you to restart it. Restarting the server is the whole fix.
 
@@ -131,18 +131,18 @@ The advice above is written by a rules engine, and it reads like one. If you wan
 OPENAI_API_KEY=sk-...
 ```
 
-**What it is allowed to do is narrow on purpose.** The local adviser decides what is *true*; the model only decides how it *sounds*. It is sent this turn's already-computed advice and nothing else — not the board, not the rules, not your save, not your name — and it is instructed to assert nothing it was not handed. It never writes history and it never gives orders.
+**What it is allowed to do is narrow on purpose.** The local adviser decides what is *true*; the model only decides how it *sounds*. It is sent this turn's already-computed advice and nothing else, not the board, not the rules, not your save, not your name, and it is instructed to assert nothing it was not handed. It never writes history and it never gives orders.
 
 That constraint is not about model size. A bigger model invents Roman history more fluently, not less, and every Codex statement in this game is meant to be checkable in Tacitus, Dio, Vegetius, Josephus or on Trajan's Column. Generated history would quietly void the one claim the project makes.
 
 - One call per turn, fired by a button, never automatically. Six-second timeout, no retries.
 - Model: `gpt-5.6-luna` on the Responses API, roughly $0.00015 a call. Override with `COUNSEL_MODEL`.
-- Endpoint: override with `COUNSEL_URL` — which is also how you point it at a local model server instead.
+- Endpoint: override with `COUNSEL_URL`, which is also how you point it at a local model server instead.
 - No key, a timeout, a rate limit, or anything unexpected: the button is not built, or the panel says so, and the local advice stands. A turn never waits on the network.
 
 ## Dependencies
 
-Runtime: `express`, and nothing else — the optional counsel above is one `fetch` against one endpoint, not an SDK. Dev: `vite`, `typescript`, `tsx`, `concurrently`, and the matching type packages. No database, no native modules.
+Runtime: `express`, and nothing else, the optional counsel above is one `fetch` against one endpoint, not an SDK. Dev: `vite`, `typescript`, `tsx`, `concurrently`, and the matching type packages. No database, no native modules.
 
 ## Accuracy note
 
