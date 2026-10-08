@@ -4,7 +4,7 @@ import { el } from "./dom.js";
  * The warning for a server that is older than the page it is serving.
  *
  * A server left running across a `git pull` keeps serving the rebuilt `dist/`
- * off disk — `express.static` reads from the filesystem per request — while its
+ * off disk, `express.static` reads from the filesystem per request, while its
  * own routes, rules and save handling stay at whatever it loaded on startup.
  * The result is a current screen against a stale API: a campaign the client
  * would happily draw but the server never mentions, a save version the server
@@ -26,7 +26,7 @@ export function staleBanner(): HTMLElement {
     el("strong", { text: "The server is older than this page. " }),
     el("span", {
       text: "It started before this build, so it is serving these screens off earlier"
-        + " rules — campaigns, routes or save handling may be missing. Stop it and start it again.",
+        + " rules, campaigns, routes or save handling may be missing. Stop it and start it again.",
     }),
   );
 }

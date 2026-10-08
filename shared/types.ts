@@ -51,11 +51,11 @@ export interface Hex {
 
 /** How one side of one campaign is spoken about on screen and in the battle log. */
 export interface Faction {
-  /** "Rome" — used where the army is the subject. */
+  /** "Rome", used where the army is the subject. */
   name: string;
-  /** "Roman" — used to qualify a noun, as in "Roman losses". */
+  /** "Roman", used to qualify a noun, as in "Roman losses". */
   adjective: string;
-  /** "The Dacians" — used where the army acts, as in "The Dacians move." */
+  /** "The Dacians", used where the army acts, as in "The Dacians move." */
   plural: string;
 }
 

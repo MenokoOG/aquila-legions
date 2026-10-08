@@ -12,7 +12,7 @@ import { policyFor } from "../../../../shared/data/ai-levels.js";
  * The host decides two things before anyone moves: who it is trying to break,
  * and whether it is already in contact. Everything after that is each unit
  * asking the combat rules what its options are worth. There is no table of
- * tactics here — flanking, the charge, higher ground and leaving a tortoise
+ * tactics here, flanking, the charge, higher ground and leaving a tortoise
  * alone all fall out of the same formulas the player's forecast panel shows.
  */
 
@@ -22,8 +22,8 @@ export { actUnit } from "./act.js";
 /**
  * The unit the host will try to break this turn: the one it can hurt most,
  * summed over every unit that can reach it. Convergence, weakness and softness
- * are all already inside that sum — three warbands that can each half-kill a
- * bowman beat one that can scratch a first cohort — so nothing here needs to
+ * are all already inside that sum, three warbands that can each half-kill a
+ * bowman beat one that can scratch a first cohort, so nothing here needs to
  * weigh them separately, and the host will not agree to concentrate on a
  * target it cannot actually hurt.
  *

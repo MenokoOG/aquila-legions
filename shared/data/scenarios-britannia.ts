@@ -10,7 +10,7 @@ import { hexes, terrain } from "./board.js";
  * defile with woods at his back and open country in front, so that ten thousand
  * men could not be flanked and a host many times that size could not bring its
  * numbers to bear. Four of these six battles are therefore won by where you
- * stand, when you leave, or what you decline to do — not by clearing the field.
+ * stand, when you leave, or what you decline to do, not by clearing the field.
  *
  * Tuning. This campaign is a lesson, not a contest, so each battle is set to the
  * point where playing it the way its own `lesson` says wins most of the time.

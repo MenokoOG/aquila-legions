@@ -10,7 +10,7 @@ import { button, clear, el } from "./dom.js";
  * adviser is meant to be glanceable between orders rather than studied.
  *
  * The tips below are the panel. If counsel is configured, a button asks a model
- * to say the most important of them in the prefect's own voice — the local
+ * to say the most important of them in the prefect's own voice, the local
  * sentences are what render first and what stay if it never answers, which is
  * the whole arrangement: the facts are ours, only the phrasing is his.
  */

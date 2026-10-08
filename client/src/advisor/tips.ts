@@ -12,7 +12,7 @@ import {
  * the board in front of you.
  *
  * Every tip is read off something the game already computes and already shows
- * somewhere — the threat overlay, the forecast panel, the objective list. The
+ * somewhere, the threat overlay, the forecast panel, the objective list. The
  * adviser tells you nothing you could not have worked out, which is the whole
  * point: it is a teaching aid, not an oracle, and a player who stops reading it
  * has lost nothing but time.
@@ -189,7 +189,7 @@ function lesson(s: BattleState): Tip[] {
       out.push({
         id: `objective:${p.objective.id}`,
         urgency: USEFUL,
-        text: `${p.objective.text} — ${p.detail}. ${p.objective.hint}`,
+        text: `${p.objective.text}, ${p.detail}. ${p.objective.hint}`,
       });
     }
   }

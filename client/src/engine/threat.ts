@@ -7,7 +7,7 @@ import { projectedReach } from "./rules.js";
  * Where the enemy can strike next turn.
  *
  * This answers a question the player used to have to hold in their head: if I stand
- * here, who can reach me? It reports capability, not intent — every hex a unit could
+ * here, who can reach me? It reports capability, not intent, every hex a unit could
  * hit once its turn comes round, not the one hex the AI will actually pick. A player
  * who plans against capability is never ambushed by the AI changing its mind.
  */

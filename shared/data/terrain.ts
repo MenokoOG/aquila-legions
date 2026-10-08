@@ -10,7 +10,7 @@ import type { Terrain } from "../types.js";
  */
 export interface TerrainDef {
   name: string;
-  /** Move points to enter. `null` is impassable — nothing crosses it. */
+  /** Move points to enter. `null` is impassable: nothing crosses it. */
   cost: number | null;
   /** Multiplier on the defence of whoever is standing there. */
   defense: number;
