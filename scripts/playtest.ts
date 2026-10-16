@@ -1,6 +1,6 @@
 import type { Hex } from "../shared/types.js";
-import { SCENARIO_BY_ID } from "../shared/data/scenarios.js";
-import { BRITANNIA_SCENARIOS } from "../shared/data/scenarios-britannia.js";
+import { CAMPAIGN_BY_ID } from "../shared/data/campaigns.js";
+import { SCENARIO_BY_ID, scenariosOf } from "../shared/data/scenarios.js";
 import { type BattleState, type BattleUnit, createBattle, toStats, unitsOf } from "../client/src/engine/battle.js";
 import { enemyTurn } from "../client/src/engine/ai/index.js";
 import { commitDeployment } from "../client/src/engine/deployment.js";
@@ -16,7 +16,8 @@ import { distance, key } from "../client/src/hex.js";
  * A headless playtest, for putting a number on "too difficult".
  *
  *   npm run playtest            every battle of the Boudican Revolt
- *   npm run playtest watling    one of them
+ *   npm run playtest judaea     every battle of one campaign, by id
+ *   npm run playtest watling    one battle, by id
  *
  * Each battle is played many times by a bot that does what that battle's own
  * `lesson` tells the player to do, and nothing cleverer: hold the marked
@@ -43,6 +44,11 @@ const PLANS: Record<string, Plan> = {
   defile: "hold",        // stand in the mouth of the gap
   watling: "line",       // volley, hold, then push
   sweep: "hunt",         // break every band still under arms
+  jotapata: "line",      // let the Scorpiones thin the wall, then climb
+  gamla: "line",         // hold the open ground and take what comes down
+  circumvallation: "hold", // keep the line of the work
+  antonia: "line",       // volley, then push the breach
+  masada: "hunt",        // climb and break the wall
 };
 
 function hexesOf(list: readonly Hex[] | undefined): Hex[] {
@@ -209,7 +215,9 @@ function playerTurn(s: BattleState, plan: Plan): void {
       case "hunt": {
         if (shouldWithdraw(u) && withdraw(s, u)) break;
         if (touching.length) { fight(s, u); break; }
-        const goal = nearest(u.at, unitsOf(s, "enemy").map((e) => e.at));
+        const foes = unitsOf(s, "enemy").map((e) => e.at);
+        const free = keyHexes.filter((h) => !s.units.some((x) => key(x.at) === key(h)));
+        const goal = foes.length ? nearest(u.at, foes) : nearest(u.at, free);
         if (goal) { const step = stepToward(s, u, goal); if (step) moveUnit(s, u, step); }
         fight(s, u);
         break;
@@ -287,13 +295,14 @@ function report(id: string): void {
 }
 
 const only = process.argv[2];
-const ids = (only ? [only] : BRITANNIA_SCENARIOS.map((s) => s.id)).filter((id) => SCENARIO_BY_ID[id]);
+const campaign = only && CAMPAIGN_BY_ID[only] ? only : "britannia";
+const ids = (only && !CAMPAIGN_BY_ID[only] ? [only] : scenariosOf(campaign).map((s) => s.id)).filter((id) => SCENARIO_BY_ID[id]);
 if (!ids.length) {
   console.error(`No such battle: ${only}`);
   process.exit(1);
 }
 
-console.log(`\nThe Boudican Revolt, played ${RUNS} times each by a bot that follows the briefing.\n`);
+console.log(`\n${CAMPAIGN_BY_ID[campaign]!.subtitle}, played ${RUNS} times each by a bot that follows the briefing.\n`);
 for (const id of ids) report(id);
 console.log([
   "",

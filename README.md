@@ -1,10 +1,12 @@
 # Aquila: Legions of Trajan
 
-A local, single-player hex-tactics game about commanding Roman legions. Two campaigns, twelve battles, each built to teach one thing.
+A local, single-player hex-tactics game about commanding Roman legions. Three campaigns, seventeen battles, each built to teach one thing.
 
 **The Dacian Wars (101 to 106 AD)** teach what the Imperial legion did well: the pilum volley, the testudo, the cuneus, the orbis, the auxiliary cavalry on the flank, and combined arms.
 
 **The Boudican Revolt (60 to 61 AD)** unlocks after it, and teaches the thing those tools cannot supply: ground. Delay as a victory at Camulodunum, a column caught on the road, an evacuation, a defile chosen and held, Watling Street at ten to one, and a punitive winter you can fail by winning too hard. Four of its six battles are not won by clearing the field.
+
+**The Jewish War (67 to 73 AD)** unlocks after that, and is about what a legion did to a place that would not come out and fight: it built. A missile-covered climb at Jotapata, a lane not to be fought in at Gamla, the wall round Jerusalem, a breach at the Antonia, and the ramp at Masada. `npm run playtest judaea` measures any campaign by id.
 
 Win a battle and the history behind its tactic unlocks in the Codex. History points and rank persist between sessions.
 

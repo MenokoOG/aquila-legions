@@ -78,7 +78,7 @@ describe("the campaign screen", () => {
   it("marks a shut era as shut rather than hiding or disabling it", () => {
     const menu = renderMenu(state(), NOOP) as unknown as StubNode;
     const locked = findAll(menu, (n) => hasClass(n, "chip") && hasClass(n, "locked"));
-    strictEqual(locked.length, 1, "exactly one era should be shut on a fresh save");
+    strictEqual(locked.length, CAMPAIGNS.length - 1, "every era but the first should be shut on a fresh save");
     const tab = locked[0]!;
     ok(textOf(tab).includes("locked"), "it has to say so in words, not only in colour");
     strictEqual(tab.disabled, false, "a disabled tab cannot be focused, so nobody can ask why it is shut");
@@ -106,9 +106,9 @@ describe("the campaign screen", () => {
   it("switches the whole screen when an open era is chosen", () => {
     const both: CampaignView[] = CAMPAIGNS.map((c) => ({ ...c, unlocked: true }));
     const menu = renderMenu(state({ campaigns: both }), NOOP) as unknown as StubNode;
-    // It opens on the last unlocked era, so the second one's battles are shown.
-    const second = CAMPAIGNS[1]!;
-    ok(textOf(menu).includes(second.subtitle), "it should open on the era you are furthest into");
+    // It opens on the last unlocked era, so that one's battles are shown.
+    const last = CAMPAIGNS[CAMPAIGNS.length - 1]!;
+    ok(textOf(menu).includes(last.subtitle), "it should open on the era you are furthest into");
     const firstTab = findAll(menu, (n) => hasClass(n, "chip"))[0]!;
     firstTab.click();
     ok(textOf(menu).includes(CAMPAIGNS[0]!.subtitle), "choosing an era should redraw the hero");

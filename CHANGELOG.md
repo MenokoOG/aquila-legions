@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added: the Jewish War, a third campaign
+
+Five battles, 67 to 73 AD, after Britannia: Jotapata (cover the climb with missiles), Gamla (do not fight in the lane), the wall round Jerusalem (hold a line for a fixed time), the Antonia (wedge the breach), and Masada (the ramp). Four new defender units in `units-judaea.ts`, eight Codex entries sourced to Josephus, and the campaign registered like the other two. Measured with `npm run playtest judaea` at 100 runs each, the bot wins 100% of every battle by playing the briefing, and every bonus it can reach scores; the Antonia's wedge bonus reads 0% only because the bot never sets a wedge.
+
+### Changed: playtest takes a campaign
+
+`npm run playtest <campaign-id>` plays every battle of that campaign; a battle id still plays one battle. The two screen tests that hard-coded "two eras" now read the count from the registry.
+
 ### Changed: em dashes removed
 
 Prose, comments and in-game text no longer use em dashes. No rules or data changed; 223 tests pass.
