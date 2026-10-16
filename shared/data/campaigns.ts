@@ -30,6 +30,21 @@ export const CAMPAIGNS: Campaign[] = [
       },
     },
   },
+  {
+    id: "judaea",
+    order: 3,
+    title: "The Rock and the City",
+    subtitle: "The Jewish War, 67 to 73 AD",
+    blurb: "Five sieges. The enemy will not come out and fight, so the legion builds: a bank, a wall round a whole city, a ramp up a rock. One of these is won by holding a line, not by clearing it.",
+    player: { name: "Rome", adjective: "Roman", plural: "The legion" },
+    enemy: { name: "Judaea", adjective: "Judaean", plural: "The defenders" },
+    hosts: {
+      raw: {
+        name: "A garrison behind a wall",
+        blurb: "They hold what they have and do not sortie. The wall is doing most of the work, and the wall is what you came for.",
+      },
+    },
+  },
 ];
 
 export const CAMPAIGN_BY_ID: Record<string, Campaign> = Object.fromEntries(

@@ -240,6 +240,70 @@ export const CODEX: CodexEntry[] = [
       "His successor, Petronius Turpilianus, did very little, and Tacitus records the result with a sneer that reads oddly now. He called it honourable peace under a nicer name.",
     ],
   },
+  {
+    id: "jewish_war", title: "The Jewish War", era: "66 to 73 AD",
+    tags: ["judaea", "war"],
+    body: [
+      "The revolt began in 66 AD and Nero sent Vespasian with three legions to put it down. Our best account is Josephus, a Galilean commander who surrendered at Jotapata, predicted that Vespasian would become emperor, and wrote the war up afterwards under Flavian patronage.",
+      "That fact shapes everything he says. He writes for Rome and about Jews, and he blames a faction of extremists for the disaster. Treat him as a witness who was there and had a reason to say what he said.",
+    ],
+  },
+  {
+    id: "jotapata", title: "The Siege of Jotapata", era: "67 AD",
+    tags: ["judaea", "siege"],
+    body: [
+      "Josephus was in command. He says the fortress stood on a crag with ravines on three sides, and that Vespasian built a bank of earth against the one approachable wall while stones and arrows came down on the working parties.",
+      "Josephus reports a siege of forty-seven days. The town fell by a night attack in which the defenders were found asleep, worn out by the watching. The commander himself surrendered and lived.",
+    ],
+  },
+  {
+    id: "gamla", title: "Gamla", era: "67 AD",
+    tags: ["judaea", "siege"],
+    body: [
+      "Josephus compares the ridge to a camel's back and says the houses were packed up the slope, one above another, so steeply that the town looked as though it would fall on itself.",
+      "He records that the first Roman assault went in through the narrow lanes and was thrown back with heavy loss, partly because men crowded onto the flat roofs and the roofs collapsed. The town fell to a second assault, and the lesson in his telling is that a storm in a lane is not a storm.",
+    ],
+  },
+  {
+    id: "circumvallation", title: "The Wall Round Jerusalem", era: "70 AD",
+    tags: ["judaea", "engineering"],
+    body: [
+      "Josephus says that Titus ran a wall of about thirty-nine stades round the whole city, with thirteen forts along it, and that the legions finished it in three days. He adds that the soldiers, each wanting to be seen working, did the job faster than anyone had thought possible.",
+      "The purpose was starvation. A city that cannot be stormed cheaply can be sealed, and sealed cities eat their stores. By the time the Romans broke in, Josephus describes the people inside as already dying of hunger.",
+    ],
+  },
+  {
+    id: "antonia", title: "The Antonia Fortress", era: "70 AD",
+    tags: ["judaea", "siege"],
+    body: [
+      "The Antonia stood at the north-west corner of the Temple Mount and overlooked it. Josephus says it was built on a rock fifty cubits high and that it was fortified on every side, so that taking it meant a way into the Temple itself.",
+      "Roman banks against it were undermined and burned by the defenders. It fell at last to a night assault, and the Temple burned a few weeks after.",
+    ],
+  },
+  {
+    id: "titus", title: "Titus", era: "39 to 81 AD",
+    tags: ["judaea", "people"],
+    body: [
+      "Vespasian's elder son, left in command of the war when his father went to Rome to be emperor. He took Jerusalem in 70 AD, celebrated a triumph for it in 71, and became emperor himself in 79.",
+      "The Arch of Titus in Rome shows the triumph, including the Temple's menorah carried in procession. It still stands.",
+    ],
+  },
+  {
+    id: "masada", title: "Masada", era: "73 AD",
+    tags: ["judaea", "siege"],
+    body: [
+      "A mesa above the Dead Sea with cliffs on every side. Herod had built palaces and storerooms on it; the last of the rebels held it after Jerusalem fell. Flavius Silva, governor of Judaea, surrounded it with a wall and built a ramp against the west side.",
+      "The Roman camps, the circumvallation and the ramp can all still be seen. Josephus gives the garrison's end as a mass suicide the night before the assault, a story that rests on his single account and is much debated.",
+    ],
+  },
+  {
+    id: "josephus", title: "Flavius Josephus", era: "c. 37 to c. 100 AD",
+    tags: ["judaea", "people"],
+    body: [
+      "Born Yosef ben Matityahu into a priestly family, he led the Galilean defence at Jotapata, surrendered, and lived in Rome as a Flavian client. He took the family name Flavius and wrote the Jewish War there.",
+      "He is the main source for everything in this campaign, and the sensible way to read him is as a participant with a position, not a neutral recorder.",
+    ],
+  },
 ];
 
 export const CODEX_BY_ID: Record<string, CodexEntry> = Object.fromEntries(

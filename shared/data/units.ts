@@ -2,6 +2,7 @@ import type { UnitTemplate } from "../types.js";
 import { ROME_UNITS } from "./units-rome.js";
 import { DACIA_UNITS } from "./units-dacia.js";
 import { BRITANNIA_UNITS } from "./units-britannia.js";
+import { JUDAEA_UNITS } from "./units-judaea.js";
 
 /**
  * The whole roster, assembled from the per-campaign files.
@@ -14,6 +15,7 @@ export const UNITS = {
   ...ROME_UNITS,
   ...DACIA_UNITS,
   ...BRITANNIA_UNITS,
+  ...JUDAEA_UNITS,
 } as const satisfies Record<string, UnitTemplate>;
 
 export type UnitKind = keyof typeof UNITS;
@@ -38,6 +40,11 @@ export const ROSTERS: { id: string; title: string; blurb: string; units: Record<
     id: "britannia", title: "The Boudican Revolt",
     blurb: "The host that burned three towns in 60 and 61 AD, and the Romans caught up in it.",
     units: BRITANNIA_UNITS,
+  },
+  {
+    id: "judaea", title: "The Jewish War",
+    blurb: "The defenders of Jotapata, Gamla, Jerusalem and Masada, 67 to 73 AD.",
+    units: JUDAEA_UNITS,
   },
 ];
 
